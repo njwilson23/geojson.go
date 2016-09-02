@@ -2,6 +2,7 @@ package geojson
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -12,7 +13,10 @@ func TestMarshallPoint(t *testing.T) {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	fmt.Println(string(b))
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Point\",\"coordinates\":[3.000000,4.000000]}"
+	if strings.Compare(string(b), ref) != 0 {
+		t.Fail()
+	}
 }
 
 func TestMarshallLineString(t *testing.T) {
@@ -24,7 +28,10 @@ func TestMarshallLineString(t *testing.T) {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	fmt.Println(string(b))
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"LineString\",\"coordinates\":[[2.000000,1.000000],[3.000000,-2.000000],[4.000000,-1.000000]]}"
+	if strings.Compare(string(b), ref) != 0 {
+		t.Fail()
+	}
 }
 
 func TestMarshallPolygon(t *testing.T) {
@@ -36,5 +43,8 @@ func TestMarshallPolygon(t *testing.T) {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	fmt.Println(string(b))
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"MultiLineString\",\"coordinates\":[[[2.000000,1.000000],[3.000000,-2.000000],[4.000000,-1.000000]]]}"
+	if strings.Compare(string(b), ref) != 0 {
+		t.Fail()
+	}
 }
