@@ -27,14 +27,14 @@ func TestMarshallLineString(t *testing.T) {
 	fmt.Println(string(b))
 }
 
-/*func TestMarshallPolygon(t *testing.T) {
+func TestMarshallPolygon(t *testing.T) {
 	X := []float64{2.0, 3.0, 4.0}
 	Y := []float64{1.0, -2.0, -1.0}
-	point := NewPolygon(X, Y)
+	point := NewPolygon2(X, Y)
 	b, err := AsGeoJSON(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Fail()
 	}
 	fmt.Println(string(b))
-}*/
+}
