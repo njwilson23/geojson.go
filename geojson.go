@@ -3,7 +3,10 @@
  */
 package geojson
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type bbox struct {
 	xmin, ymin, xmax, ymax float64
@@ -86,100 +89,120 @@ func (p *Position3) Y() float64 {
 
 type Point struct {
 	CRSReferencable
-	Type        string   `json:"type"`
-	Coordinates Position `json:"coordinates"`
+	Type        string    `json:"type"`
+	Coordinates []float64 `json:"coordinates"`
 }
 
 func (p Point) Bbox() *bbox {
-	return &bbox{p.Coordinates.X(), p.Coordinates.Y(),
-		p.Coordinates.X(), p.Coordinates.Y()}
+	return &bbox{p.Coordinates[0], p.Coordinates[1],
+		p.Coordinates[0], p.Coordinates[1]}
 }
 
 type LineString struct {
 	CRSReferencable
-	Type        string     `json:"type"`
-	Coordinates []Position `json:"coordinates"`
+	Type        string      `json:"type"`
+	Coordinates [][]float64 `json:"coordinates"`
 }
 
 func (g LineString) Bbox() *bbox {
-	xmin := g.Coordinates[0].X()
-	ymin := g.Coordinates[0].Y()
-	xmax := g.Coordinates[0].X()
-	ymax := g.Coordinates[0].Y()
+	xmin := g.Coordinates[0][0]
+	ymin := g.Coordinates[0][1]
+	xmax := g.Coordinates[0][0]
+	ymax := g.Coordinates[0][1]
 	var i int
 	for i = 1; i != len(g.Coordinates); i++ {
-		xmin = math.Min(g.Coordinates[i].X(), xmin)
-		ymin = math.Min(g.Coordinates[i].Y(), ymin)
-		xmax = math.Max(g.Coordinates[i].X(), xmax)
-		ymax = math.Max(g.Coordinates[i].Y(), ymax)
+		xmin = math.Min(g.Coordinates[i][0], xmin)
+		ymin = math.Min(g.Coordinates[i][1], ymin)
+		xmax = math.Max(g.Coordinates[i][0], xmax)
+		ymax = math.Max(g.Coordinates[i][1], ymax)
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
+func (g Point) String() string {
+	return fmt.Sprintf("Point %.2f", g.Coordinates)
+}
+
+func (g LineString) String() string {
+	if len(g.Coordinates) <= 8 {
+		return fmt.Sprintf("LineString %.2f", g.Coordinates)
+	} else {
+		return fmt.Sprintf("LineString %.2f...", g.Coordinates[0:8])
+	}
+}
+
+func (g Polygon) String() string {
+	if len(g.Coordinates[0]) <= 8 {
+		return fmt.Sprintf("Polygon %.2f", g.Coordinates[0])
+	} else {
+		return fmt.Sprintf("Polygon %.2f...", g.Coordinates[0][0:8])
+	}
+}
+
 type Polygon struct {
 	CRSReferencable
-	Type        string       `json:"type"`
-	Coordinates [][]Position `json:"coordinates"`
+	Type        string        `json:"type"`
+	Coordinates [][][]float64 `json:"coordinates"`
 }
 
 func (g Polygon) Bbox() *bbox {
-	xmin := g.Coordinates[0][0].X()
-	ymin := g.Coordinates[0][0].Y()
-	xmax := g.Coordinates[0][0].X()
-	ymax := g.Coordinates[0][0].Y()
+	xmin := g.Coordinates[0][0][0]
+	ymin := g.Coordinates[0][0][1]
+	xmax := g.Coordinates[0][0][0]
+	ymax := g.Coordinates[0][0][1]
 	var i int
 	for i = 1; i != len(g.Coordinates); i++ {
-		xmin = math.Min(g.Coordinates[0][i].X(), xmin)
-		ymin = math.Min(g.Coordinates[0][i].Y(), ymin)
-		xmax = math.Max(g.Coordinates[0][i].X(), xmax)
-		ymax = math.Max(g.Coordinates[0][i].Y(), ymax)
+		xmin = math.Min(g.Coordinates[0][i][0], xmin)
+		ymin = math.Min(g.Coordinates[0][i][1], ymin)
+		xmax = math.Max(g.Coordinates[0][i][0], xmax)
+		ymax = math.Max(g.Coordinates[0][i][1], ymax)
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
 type MultiPoint struct {
 	CRSReferencable
-	Type        string     `json:"type"`
-	Coordinates []Position `json:"coordinates"`
+	Type        string      `json:"type"`
+	Coordinates [][]float64 `json:"coordinates"`
 }
 
 func (g MultiPoint) Bbox() *bbox {
-	xmin := g.Coordinates[0].X()
-	ymin := g.Coordinates[0].Y()
-	xmax := g.Coordinates[0].X()
-	ymax := g.Coordinates[0].Y()
+	xmin := g.Coordinates[0][0]
+	ymin := g.Coordinates[0][1]
+	xmax := g.Coordinates[0][0]
+	ymax := g.Coordinates[0][1]
 	var i int
-	var position Position
+	var position []float64
 	for i = 0; i != len(g.Coordinates); i++ {
 		position = g.Coordinates[i]
-		xmin = math.Min(position.X(), xmin)
-		ymin = math.Min(position.Y(), ymin)
-		xmax = math.Max(position.X(), xmax)
-		ymax = math.Max(position.Y(), ymax)
+		xmin = math.Min(position[0], xmin)
+		ymin = math.Min(position[1], ymin)
+		xmax = math.Max(position[0], xmax)
+		ymax = math.Max(position[1], ymax)
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
 type MultiLineString struct {
 	CRSReferencable
-	Type        string       `json:"type"`
-	Coordinates [][]Position `json:"coordinates"`
+	Type        string        `json:"type"`
+	Coordinates [][][]float64 `json:"coordinates"`
 }
 
 func (g MultiLineString) Bbox() *bbox {
-	xmin := g.Coordinates[0][0].X()
-	ymin := g.Coordinates[0][0].Y()
-	xmax := g.Coordinates[0][0].X()
-	ymax := g.Coordinates[0][0].Y()
+	xmin := g.Coordinates[0][0][0]
+	ymin := g.Coordinates[0][0][1]
+	xmax := g.Coordinates[0][0][0]
+	ymax := g.Coordinates[0][0][1]
 	var i, j int
-	var position Position
+	var position []float64
 	for i = 0; i != len(g.Coordinates); i++ {
 		for j = 0; j != len(g.Coordinates[i]); j++ {
 			position = g.Coordinates[i][j]
-			xmin = math.Min(position.X(), xmin)
-			ymin = math.Min(position.Y(), ymin)
-			xmax = math.Max(position.X(), xmax)
-			ymax = math.Max(position.Y(), ymax)
+			xmin = math.Min(position[0], xmin)
+			ymin = math.Min(position[1], ymin)
+			xmax = math.Max(position[0], xmax)
+			ymax = math.Max(position[1], ymax)
 		}
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
@@ -187,24 +210,24 @@ func (g MultiLineString) Bbox() *bbox {
 
 type MultiPolygon struct {
 	CRSReferencable
-	Type        string         `json:"type"`
-	Coordinates [][][]Position `json:"coordinates"`
+	Type        string          `json:"type"`
+	Coordinates [][][][]float64 `json:"coordinates"`
 }
 
 func (g MultiPolygon) Bbox() *bbox {
-	xmin := g.Coordinates[0][0][0].X()
-	ymin := g.Coordinates[0][0][0].Y()
-	xmax := g.Coordinates[0][0][0].X()
-	ymax := g.Coordinates[0][0][0].Y()
+	xmin := g.Coordinates[0][0][0][0]
+	ymin := g.Coordinates[0][0][0][1]
+	xmax := g.Coordinates[0][0][0][0]
+	ymax := g.Coordinates[0][0][0][1]
 	var i, j int
-	var position Position
+	var position []float64
 	for i = 0; i != len(g.Coordinates); i++ {
 		for j = 0; j != len(g.Coordinates[i]); j++ {
 			position = g.Coordinates[i][0][j]
-			xmin = math.Min(position.X(), xmin)
-			ymin = math.Min(position.Y(), ymin)
-			xmax = math.Max(position.X(), xmax)
-			ymax = math.Max(position.Y(), ymax)
+			xmin = math.Min(position[0], xmin)
+			ymin = math.Min(position[1], ymin)
+			xmax = math.Max(position[0], xmax)
+			ymax = math.Max(position[1], ymax)
 		}
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
@@ -214,18 +237,18 @@ func (g MultiPolygon) Bbox() *bbox {
 type Feature struct {
 	CRSReferencable
 	Type       string `json:"type"`
-	geometry   Geometry
-	properties map[string]string
+	Geometry   Geometry
+	Properties map[string]string
 }
 
 type GeometryCollection struct {
 	CRSReferencable
 	Type       string `json:"type"`
-	geometries []Geometry
+	Geometries []Geometry
 }
 
 type FeatureCollection struct {
 	CRSReferencable
 	Type     string `json:"type"`
-	features []Feature
+	Features []Feature
 }

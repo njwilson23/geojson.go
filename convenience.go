@@ -1,18 +1,10 @@
 package geojson
 
 func NewPoint(x ...float64) *Point {
-	var pos Position
-	if len(x) == 2 {
-		pos = &Position2{x[0], x[1]}
-	} else if len(x) == 3 {
-		pos = &Position3{x[0], x[1], x[2]}
-	} else {
-		panic("too many arguments")
-	}
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(Point)
 	g.Type = "Point"
-	g.Coordinates = pos
+	g.Coordinates = x
 	g.Crs = *crs
 	return g
 }
@@ -20,24 +12,24 @@ func NewPoint(x ...float64) *Point {
 func NewMultiPoint(x ...[]float64) *MultiPoint {
 	var ivert int
 	var nVertices int
-	var pos Position
-	var coordinates []Position
+	var pos []float64
+	var coordinates [][]float64
 
 	if len(x) == 2 {
 
 		nVertices = len(x[0])
-		coordinates = make([]Position, nVertices)
+		coordinates = make([][]float64, nVertices)
 		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = &Position2{x[0][ivert], x[1][ivert]}
+			pos = []float64{x[0][ivert], x[1][ivert]}
 			coordinates[ivert] = pos
 		}
 
 	} else if len(x) == 3 {
 
 		nVertices = len(x[0])
-		coordinates = make([]Position, nVertices)
+		coordinates = make([][]float64, nVertices)
 		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = &Position3{x[0][ivert], x[1][ivert], x[2][ivert]}
+			pos = []float64{x[0][ivert], x[1][ivert], x[2][ivert]}
 			coordinates[ivert] = pos
 		}
 
@@ -56,24 +48,24 @@ func NewMultiPoint(x ...[]float64) *MultiPoint {
 func NewLineString(x ...[]float64) *LineString {
 	var ivert int
 	var nVertices int
-	var pos Position
-	var coordinates []Position
+	var pos []float64
+	var coordinates [][]float64
 
 	if len(x) == 2 {
 
 		nVertices = len(x[0])
-		coordinates = make([]Position, nVertices)
+		coordinates = make([][]float64, nVertices)
 		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = &Position2{x[0][ivert], x[1][ivert]}
+			pos = []float64{x[0][ivert], x[1][ivert]}
 			coordinates[ivert] = pos
 		}
 
 	} else if len(x) == 3 {
 
 		nVertices = len(x[0])
-		coordinates = make([]Position, nVertices)
+		coordinates = make([][]float64, nVertices)
 		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = &Position3{x[0][ivert], x[1][ivert], x[2][ivert]}
+			pos = []float64{x[0][ivert], x[1][ivert], x[2][ivert]}
 			coordinates[ivert] = pos
 		}
 
@@ -95,18 +87,18 @@ func NewLineString(x ...[]float64) *LineString {
 func NewMultiLineString2(x ...[]float64) *MultiLineString {
 	var ip, ivert int
 	var nParts, nVertices int
-	var pos Position
-	var coordinates [][]Position
+	var pos []float64
+	var coordinates [][][]float64
 
 	if (len(x) % 2) == 0 {
 
 		nParts = len(x) / 2
-		coordinates = make([][]Position, nParts)
+		coordinates = make([][][]float64, nParts)
 		for ip = 0; ip != nParts; ip++ {
 			nVertices = len(x[ip*2])
-			coordinates[ip] = make([]Position, nVertices)
+			coordinates[ip] = make([][]float64, nVertices)
 			for ivert = 0; ivert != nVertices; ivert++ {
-				pos = &Position2{x[ip*2][ivert], x[ip*2+1][ivert]}
+				pos = []float64{x[ip*2][ivert], x[ip*2+1][ivert]}
 				coordinates[ip][ivert] = pos
 			}
 		}
@@ -129,18 +121,18 @@ func NewMultiLineString2(x ...[]float64) *MultiLineString {
 func NewPolygon2(x ...[]float64) *Polygon {
 	var ip, ivert int
 	var nParts, nVertices int
-	var pos Position
-	var coordinates [][]Position
+	var pos []float64
+	var coordinates [][][]float64
 
 	if (len(x) % 2) == 0 {
 
 		nParts = len(x) / 2
-		coordinates = make([][]Position, nParts)
+		coordinates = make([][][]float64, nParts)
 		for ip = 0; ip != nParts; ip++ {
 			nVertices = len(x[ip*2])
-			coordinates[ip] = make([]Position, nVertices)
+			coordinates[ip] = make([][]float64, nVertices)
 			for ivert = 0; ivert != nVertices; ivert++ {
-				pos = &Position2{x[ip*2][ivert], x[ip*2+1][ivert]}
+				pos = []float64{x[ip*2][ivert], x[ip*2+1][ivert]}
 				coordinates[ip][ivert] = pos
 			}
 		}
