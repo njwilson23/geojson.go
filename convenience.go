@@ -3,7 +3,6 @@ package geojson
 func NewPoint(x ...float64) *Point {
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(Point)
-	g.Type = "Point"
 	g.Coordinates = x
 	g.Crs = *crs
 	return g
@@ -39,7 +38,6 @@ func NewMultiPoint(x ...[]float64) *MultiPoint {
 
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(MultiPoint)
-	g.Type = "MultiPoint"
 	g.Coordinates = coordinates
 	g.Crs = *crs
 	return g
@@ -75,7 +73,6 @@ func NewLineString(x ...[]float64) *LineString {
 
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(LineString)
-	g.Type = "LineString"
 	g.Coordinates = coordinates
 	g.Crs = *crs
 	return g
@@ -109,7 +106,6 @@ func NewMultiLineString2(x ...[]float64) *MultiLineString {
 
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(MultiLineString)
-	g.Type = "MultiLineString"
 	g.Coordinates = coordinates
 	g.Crs = *crs
 	return g
@@ -143,7 +139,6 @@ func NewPolygon2(x ...[]float64) *Polygon {
 
 	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(Polygon)
-	g.Type = "MultiLineString"
 	g.Coordinates = coordinates
 	g.Crs = *crs
 	return g

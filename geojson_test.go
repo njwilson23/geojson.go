@@ -26,7 +26,7 @@ func TestMarshallLineString(t *testing.T) {
 	b, err := AsGeoJSON(point)
 	if err != nil {
 		fmt.Println("error", err)
-		t.Fail()
+		t.Error()
 	}
 	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"LineString\",\"coordinates\":[[2,1],[3,-2],[4,-1]]}"
 	if strings.Compare(string(b), ref) != 0 {
@@ -41,11 +41,28 @@ func TestMarshallPolygon(t *testing.T) {
 	b, err := AsGeoJSON(point)
 	if err != nil {
 		fmt.Println("error", err)
-		t.Fail()
+		t.Error()
 	}
-	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"MultiLineString\",\"coordinates\":[[[2,1],[3,-2],[4,-1]]]}"
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Polygon\",\"coordinates\":[[[2,1],[3,-2],[4,-1]]]}"
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
+	}
+}
+
+func TestMarshallFeature(t *testing.T) {
+	f := new(Feature)
+	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
+	geom := NewPoint(3.0, 4.0)
+	prop := make(map[string]int64)
+	prop["a"] = 49
+	prop["b"] = 17
+	f.Crs = *crs
+	f.Properties = prop
+	f.Geometry = geom
+	_, err := MarshalFeature(*f)
+	if err != nil {
+		fmt.Println("error", err)
+		t.Error()
 	}
 }
 

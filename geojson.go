@@ -44,7 +44,6 @@ type Geometry interface {
 
 type Point struct {
 	CRSReferencable
-	Type        string    `json:"type"`
 	Coordinates []float64 `json:"coordinates"`
 }
 
@@ -55,7 +54,6 @@ func (p Point) Bbox() *bbox {
 
 type LineString struct {
 	CRSReferencable
-	Type        string      `json:"type"`
 	Coordinates [][]float64 `json:"coordinates"`
 }
 
@@ -96,7 +94,6 @@ func (g Polygon) String() string {
 
 type Polygon struct {
 	CRSReferencable
-	Type        string        `json:"type"`
 	Coordinates [][][]float64 `json:"coordinates"`
 }
 
@@ -117,7 +114,6 @@ func (g Polygon) Bbox() *bbox {
 
 type MultiPoint struct {
 	CRSReferencable
-	Type        string      `json:"type"`
 	Coordinates [][]float64 `json:"coordinates"`
 }
 
@@ -140,7 +136,6 @@ func (g MultiPoint) Bbox() *bbox {
 
 type MultiLineString struct {
 	CRSReferencable
-	Type        string        `json:"type"`
 	Coordinates [][][]float64 `json:"coordinates"`
 }
 
@@ -165,7 +160,6 @@ func (g MultiLineString) Bbox() *bbox {
 
 type MultiPolygon struct {
 	CRSReferencable
-	Type        string          `json:"type"`
 	Coordinates [][][][]float64 `json:"coordinates"`
 }
 
@@ -191,7 +185,6 @@ func (g MultiPolygon) Bbox() *bbox {
 
 type GeometryCollection struct {
 	CRSReferencable
-	Type       string     `json:"type"`
 	Geometries []Geometry `json:"geometries"`
 }
 
@@ -215,14 +208,12 @@ func (collection GeometryCollection) Bbox() *bbox {
 
 type Feature struct {
 	CRSReferencable
-	Type       string      `json:"type"`
-	Id         string      `json:"id"`
+	Id         string      `json:"id,omitempty"`
 	Geometry   Geometry    `json:"geometry"`
 	Properties interface{} `json:"properties"`
 }
 
 type FeatureCollection struct {
 	CRSReferencable
-	Type     string    `json:"type"`
 	Features []Feature `json:"features"`
 }
