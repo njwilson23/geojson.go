@@ -8,13 +8,15 @@ import (
 
 func TestMarshalPoint(t *testing.T) {
 	point := NewPoint(3.0, 4.0)
-	b, err := AsGeoJSON(point)
+	b, err := MarshalGeometry(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Point\",\"coordinates\":[3,4]}"
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC::CRS84\"}},\"type\":\"Point\",\"coordinates\":[3,4]}"
 	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
 		t.Fail()
 	}
 }
@@ -23,12 +25,12 @@ func TestMarshalLineString(t *testing.T) {
 	X := []float64{2.0, 3.0, 4.0}
 	Y := []float64{1.0, -2.0, -1.0}
 	point := NewLineString(X, Y)
-	b, err := AsGeoJSON(point)
+	b, err := MarshalGeometry(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"LineString\",\"coordinates\":[[2,1],[3,-2],[4,-1]]}"
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC::CRS84\"}},\"type\":\"LineString\",\"coordinates\":[[2,1],[3,-2],[4,-1]]}"
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}
@@ -38,12 +40,12 @@ func TestMarshalPolygon(t *testing.T) {
 	X := []float64{2.0, 3.0, 4.0}
 	Y := []float64{1.0, -2.0, -1.0}
 	point := NewPolygon2(X, Y)
-	b, err := AsGeoJSON(point)
+	b, err := MarshalGeometry(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Polygon\",\"coordinates\":[[[2,1],[3,-2],[4,-1]]]}"
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC::CRS84\"}},\"type\":\"Polygon\",\"coordinates\":[[[2,1],[3,-2],[4,-1]]]}"
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}
@@ -51,12 +53,11 @@ func TestMarshalPolygon(t *testing.T) {
 
 func TestMarshalFeature(t *testing.T) {
 	f := new(Feature)
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	geom := NewPoint(3.0, 4.0)
 	prop := make(map[string]int64)
 	prop["a"] = 49
 	prop["b"] = 17
-	f.Crs = *crs
+	f.Crs = *WGS84
 	f.Properties = prop
 	f.Geometry = geom
 	b, err := MarshalFeature(*f)
@@ -64,7 +65,7 @@ func TestMarshalFeature(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Feature\",\"geometry\":{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC:1.3:CRS84\"}},\"type\":\"Point\",\"coordinates\":[3,4]},\"properties\":{\"a\":49,\"b\":17}}"
+	ref := "{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC::CRS84\"}},\"type\":\"Feature\",\"geometry\":{\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"urn:ogc:def:crs:OGC::CRS84\"}},\"type\":\"Point\",\"coordinates\":[3,4]},\"properties\":{\"a\":49,\"b\":17}}"
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}

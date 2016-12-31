@@ -9,16 +9,20 @@ import (
 	"fmt"
 )
 
-// Option type for reading GeoJSON data
+// Option type for returning the components of a GeoJSON object
 type GeoJSONResult struct {
 	Features   []Feature
 	Geometries []Geometry
 }
 
+// unknownGeoJSONType is used to read in only the type member of a GeoJSON
+// object
 type unknownGeoJSONType struct {
 	Type string `json:"type"`
 }
 
+// partialGeometryCollection is used to obtain a list of byte arrays
+// representing the Geometries member of a GeometryCollection
 type partialGeometryCollection struct {
 	Type       string            `json:"type"`
 	Geometries []json.RawMessage `json:"geometries"`
@@ -130,190 +134,3 @@ func UnmarshalGeometry(data []byte) (Geometry, error) {
 		return NewPoint(0, 0), errors.New(fmt.Sprintf("unrecognized GeoJSON type '%s'", uknType.Type))
 	}
 }
-
-// func ParseGeoJSON(stream []byte) (GeoJSONResult, error) {
-// 	var result GeoJSONResult
-// 	streamMap := make(map[string]interface{})
-// 	err := json.Unmarshal(stream, streamMap)
-// 	if err != nil {
-// 		return result, err
-// 	}
-//
-// 	var geo Geometry
-// 	var geoCollection *GeometryCollection
-// 	var feature *Feature
-// 	var featureCollection *FeatureCollection
-//
-// 	// FIXME
-// 	data, ok := streamMap["type"]
-// 	if !ok {
-// 		return result, errors.New("invalid GeoJSON: JSON object missing 'type' key")
-// 	}
-//
-// 	_type, ok := data.(string)
-// 	if !ok {
-// 		return result, errors.New("invalid GeoJSON: 'type' value not a string")
-// 	}
-// 	fmt.Println(_type)
-// 	/*switch type _type {
-// 	case string:
-// 		break
-// 	default:
-// 		return result, new.Errors("type attribute not string")
-// 	}*/
-//
-// 	switch _type {
-// 	case "Point":
-// 		geo, err = parsePoint(streamMap)
-// 		if err != nil {
-// 			return result, errors.New("invalid GeoJSON: malformed Point object")
-// 		}
-// 		result.Geometries = append(result.Geometries, geo)
-// 	case "MultiPoint":
-// 		geo, err = parseMultiPoint(streamMap)
-// 		if err != nil {
-// 			return result, errors.New("invalid GeoJSON: malformed MultiPoint object")
-// 		}
-// 		result.Geometries = append(result.Geometries, geo)
-// 	case "LineString":
-// 		geo, err = parseLineString(streamMap)
-// 		if err != nil {
-// 			return result, errors.New("invalid GeoJSON: malformed LineString object")
-// 		}
-// 		result.Geometries = append(result.Geometries, geo)
-// 	case "MultiLineString":
-// 		geo, err = parseMultiLineString(streamMap)
-// 		if err != nil {
-// 			return result, errors.New("invalid GeoJSON: malformed MultiLineString object")
-// 		}
-// 		result.Geometries = append(result.Geometries, geo)
-// 	case "Polygon":
-// 		geo, err = parsePolygon(streamMap)
-// 		if err != nil {
-// 			return result, errors.New("invalid GeoJSON: malformed Polygon object")
-// 		}
-// 		result.Geometries = append(result.Geometries, geo)
-// 	//case "MultiPolygon":
-// 	//	geo, err = parseMultiPolygon(streamMap)
-// 	//	if err != nil {
-// 	//		return result, errors.New("invalid GeoJSON: malformed MultiPolygon object")
-// 	//	}
-// 	//	result.Geometries = append(result.Geometries, geo)
-// 	case "GeometryCollection":
-// 		geoCollection, err = parseGeometryCollection(streamMap)
-// 		if err != nil {
-// 			err = errors.New(fmt.Sprintf("%s\n  %s", err,
-// 				"invalid GeoJSON: malformed GeometryCollection object"))
-// 			return result, err
-// 		}
-// 		result.GeometryCollections = append(result.GeometryCollections, *geoCollection)
-// 	case "Feature":
-// 		feature, err = parseFeature(streamMap)
-// 		if err != nil {
-// 			err = errors.New(fmt.Sprintf("%s\n  %s", err,
-// 				"invalid GeoJSON: malformed Feature object"))
-// 			return result, err
-// 		}
-// 		result.Features = append(result.Features, *feature)
-// 	case "FeatureCollection":
-// 		featureCollection, err = parseFeatureCollection(streamMap)
-// 		if err != nil {
-// 			err = errors.New(fmt.Sprintf("%s\n  %s", err,
-// 				"invalid GeoJSON: malformed FeatureCollection object"))
-// 			return result, err
-// 		}
-// 		result.FeatureCollections = append(result.FeatureCollections, *featureCollection)
-// 	}
-//
-// 	return result, nil
-// }
-//
-// func parsePoint(streamMap map[string]interface{}) (*Point, error) {
-// 	data, ok := streamMap["coordinates"]
-// 	if !ok {
-// 		return nil, errors.New("Point object missing 'coordinates'")
-// 	}
-// 	coords, ok := data.([]float64)
-// 	if !ok {
-// 		return nil, errors.New("Point object coordinates of unexpected type")
-// 	}
-// 	point := NewPoint(coords...)
-// 	return point, nil
-// }
-//
-// func parseMultiPoint(streamMap map[string]interface{}) (*MultiPoint, error) {
-// 	data, ok := streamMap["coordinates"]
-// 	if !ok {
-// 		return nil, errors.New("Point object missing 'coordinates'")
-// 	}
-// 	coords, ok := data.([][]float64)
-// 	if !ok {
-// 		return nil, errors.New("MultiPoint object coordinates of unexpected type")
-// 	}
-// 	mp := NewMultiPoint(coords...)
-// 	return mp, nil
-// }
-//
-// func parseLineString(streamMap map[string]interface{}) (*LineString, error) {
-// 	data, ok := streamMap["coordinates"]
-// 	if !ok {
-// 		return nil, errors.New("LineString object missing 'coordinates'")
-// 	}
-// 	coords, ok := data.([][]float64)
-// 	if !ok {
-// 		return nil, errors.New("LineString object coordinates of unexpected type")
-// 	}
-// 	linestring := NewLineString(coords...)
-// 	return linestring, nil
-// }
-//
-// func parseMultiLineString(streamMap map[string]interface{}) (*MultiLineString, error) {
-// 	data, ok := streamMap["coordinates"]
-// 	if !ok {
-// 		return nil, errors.New("MultiLineString object missing 'coordinates'")
-// 	}
-// 	coords, ok := data.([][]float64)
-// 	if !ok {
-// 		return nil, errors.New("MultiLineString object coordinates of unexpected type")
-// 	}
-// 	multilinestring := NewMultiLineString2(coords...)
-// 	return multilinestring, nil
-// }
-//
-// func parsePolygon(streamMap map[string]interface{}) (*Polygon, error) {
-// 	data, ok := streamMap["coordinates"]
-// 	if !ok {
-// 		return nil, errors.New("Polygon object missing 'coordinates'")
-// 	}
-// 	coords, ok := data.([][]float64)
-// 	if !ok {
-// 		return nil, errors.New("Polygon object coordinates of unexpected type")
-// 	}
-// 	polygon := NewPolygon2(coords...)
-// 	return polygon, nil
-// }
-//
-// // func parseMultiPolygon(streamMap map[string]interface{}) (*MultiPolygon, error) {
-// // 	data, ok := streamMap["coordinates"]
-// // 	if !ok {
-// // 		return nil, errors.New("MultiPolygon object missing 'coordinates'")
-// // 	}
-// // 	coords, ok := data.([][][]float64)
-// // 	if !ok {
-// // 		return nil, errors.New("MultiPolygon object coordinates of unexpected type")
-// // 	}
-// // 	multipolygon := NewMultiPolygon2(coords...)
-// // 	return multipolygon, nil
-// // }
-//
-// func parseGeometryCollection(streamMap map[string]interface{}) (*GeometryCollection, error) {
-// 	return nil, errors.New("not implemented")
-// }
-//
-// func parseFeature(streamMap map[string]interface{}) (*Feature, error) {
-// 	return nil, errors.New("not implemented")
-// }
-//
-// func parseFeatureCollection(streamMap map[string]interface{}) (*FeatureCollection, error) {
-// 	return nil, errors.New("not implemented")
-// }

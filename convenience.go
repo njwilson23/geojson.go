@@ -1,10 +1,28 @@
 package geojson
 
+// NameCRS returns a named CRS object
+// Note that for RFC 7946 compliance, WGS84 may be used
+func NameCRS(name string) *CRS {
+	prop := make(map[string]string)
+	prop["name"] = name
+	return &CRS{"name", prop}
+}
+
+// LinkCRS returns a linked CRS object
+// Note that for RFC 7946 compliance, WGS84 may be used
+func LinkCRS(link string) *CRS {
+	prop := make(map[string]string)
+	prop["link"] = link
+	return &CRS{"link", prop}
+}
+
+var WGS84 *CRS = NameCRS("urn:ogc:def:crs:OGC::CRS84")
+
+// NewPoint creates a point with the provided coordinates
 func NewPoint(x ...float64) *Point {
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(Point)
 	g.Coordinates = x
-	g.Crs = *crs
+	g.Crs = *WGS84
 	return g
 }
 
@@ -33,13 +51,12 @@ func NewMultiPoint(x ...[]float64) *MultiPoint {
 		}
 
 	} else {
-		panic("NewLineString called with odd number of arguments")
+		panic("NewMultiPoint takes either 2 or 3 arguments of type []float64")
 	}
 
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(MultiPoint)
 	g.Coordinates = coordinates
-	g.Crs = *crs
+	g.Crs = *WGS84
 	return g
 }
 
@@ -68,13 +85,12 @@ func NewLineString(x ...[]float64) *LineString {
 		}
 
 	} else {
-		panic("NewLineString called with odd number of arguments")
+		panic("NewLineString takes either 2 or 3 arguments of type []float64")
 	}
 
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(LineString)
 	g.Coordinates = coordinates
-	g.Crs = *crs
+	g.Crs = *WGS84
 	return g
 }
 
@@ -104,10 +120,9 @@ func NewMultiLineString2(x ...[]float64) *MultiLineString {
 		panic("NewMultiLineString2 called with odd number of arguments")
 	}
 
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(MultiLineString)
 	g.Coordinates = coordinates
-	g.Crs = *crs
+	g.Crs = *WGS84
 	return g
 }
 
@@ -134,12 +149,11 @@ func NewPolygon2(x ...[]float64) *Polygon {
 		}
 
 	} else {
-		panic("NewPolygon called with odd number of arguments")
+		panic("NewPolygon2 called with odd number of arguments")
 	}
 
-	crs := NameCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 	g := new(Polygon)
 	g.Coordinates = coordinates
-	g.Crs = *crs
+	g.Crs = *WGS84
 	return g
 }

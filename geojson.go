@@ -9,25 +9,9 @@ import (
 	"math"
 )
 
-type bbox struct {
-	xmin, ymin, xmax, ymax float64
-}
-
 type CRS struct {
 	Type       string            `json:"type"`
 	Properties map[string]string `json:"properties"`
-}
-
-func NameCRS(name string) *CRS {
-	prop := make(map[string]string)
-	prop["name"] = name
-	return &CRS{"name", prop}
-}
-
-func LinkCRS(link string) *CRS {
-	prop := make(map[string]string)
-	prop["link"] = link
-	return &CRS{"link", prop}
 }
 
 type CRSReferencable struct {
@@ -36,6 +20,10 @@ type CRSReferencable struct {
 
 func (g CRSReferencable) GetCrs() *CRS {
 	return &g.Crs
+}
+
+type bbox struct {
+	xmin, ymin, xmax, ymax float64
 }
 
 type Geometry interface {
@@ -48,14 +36,53 @@ type Point struct {
 	Coordinates []float64 `json:"coordinates"`
 }
 
-func (p Point) Bbox() *bbox {
-	return &bbox{p.Coordinates[0], p.Coordinates[1],
-		p.Coordinates[0], p.Coordinates[1]}
-}
-
 type LineString struct {
 	CRSReferencable
 	Coordinates [][]float64 `json:"coordinates"`
+}
+
+type Polygon struct {
+	CRSReferencable
+	Coordinates [][][]float64 `json:"coordinates"`
+}
+
+type MultiPoint struct {
+	CRSReferencable
+	Coordinates [][]float64 `json:"coordinates"`
+}
+
+type MultiLineString struct {
+	CRSReferencable
+	Coordinates [][][]float64 `json:"coordinates"`
+}
+
+type MultiPolygon struct {
+	CRSReferencable
+	Coordinates [][][][]float64 `json:"coordinates"`
+}
+
+type GeometryCollection struct {
+	CRSReferencable
+	Geometries []Geometry `json:"geometries"`
+}
+
+type Feature struct {
+	CRSReferencable
+	Id         string      `json:"id,omitempty"`
+	Geometry   Geometry    `json:"geometry"`
+	Properties interface{} `json:"properties"`
+}
+
+type FeatureCollection struct {
+	CRSReferencable
+	Features []Feature `json:"features"`
+}
+
+/* Bbox methods */
+
+func (p Point) Bbox() *bbox {
+	return &bbox{p.Coordinates[0], p.Coordinates[1],
+		p.Coordinates[0], p.Coordinates[1]}
 }
 
 func (g LineString) Bbox() *bbox {
@@ -73,31 +100,6 @@ func (g LineString) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-func (g Point) String() string {
-	return fmt.Sprintf("Point %.2f", g.Coordinates)
-}
-
-func (g LineString) String() string {
-	if len(g.Coordinates) <= 8 {
-		return fmt.Sprintf("LineString %.2f", g.Coordinates)
-	} else {
-		return fmt.Sprintf("LineString %.2f...", g.Coordinates[0:8])
-	}
-}
-
-func (g Polygon) String() string {
-	if len(g.Coordinates[0]) <= 8 {
-		return fmt.Sprintf("Polygon %.2f", g.Coordinates[0])
-	} else {
-		return fmt.Sprintf("Polygon %.2f...", g.Coordinates[0][0:8])
-	}
-}
-
-type Polygon struct {
-	CRSReferencable
-	Coordinates [][][]float64 `json:"coordinates"`
-}
-
 func (g Polygon) Bbox() *bbox {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
@@ -111,11 +113,6 @@ func (g Polygon) Bbox() *bbox {
 		ymax = math.Max(g.Coordinates[0][i][1], ymax)
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
-}
-
-type MultiPoint struct {
-	CRSReferencable
-	Coordinates [][]float64 `json:"coordinates"`
 }
 
 func (g MultiPoint) Bbox() *bbox {
@@ -135,11 +132,6 @@ func (g MultiPoint) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-type MultiLineString struct {
-	CRSReferencable
-	Coordinates [][][]float64 `json:"coordinates"`
-}
-
 func (g MultiLineString) Bbox() *bbox {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
@@ -157,11 +149,6 @@ func (g MultiLineString) Bbox() *bbox {
 		}
 	}
 	return &bbox{xmin, ymin, xmax, ymax}
-}
-
-type MultiPolygon struct {
-	CRSReferencable
-	Coordinates [][][][]float64 `json:"coordinates"`
 }
 
 func (g MultiPolygon) Bbox() *bbox {
@@ -184,11 +171,6 @@ func (g MultiPolygon) Bbox() *bbox {
 
 }
 
-type GeometryCollection struct {
-	CRSReferencable
-	Geometries []Geometry `json:"geometries"`
-}
-
 func (collection GeometryCollection) Bbox() *bbox {
 	bb := collection.Geometries[0].Bbox()
 	xmin := bb.xmin
@@ -207,14 +189,24 @@ func (collection GeometryCollection) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-type Feature struct {
-	CRSReferencable
-	Id         string      `json:"id,omitempty"`
-	Geometry   Geometry    `json:"geometry"`
-	Properties interface{} `json:"properties"`
+/* String methods */
+
+func (g Point) String() string {
+	return fmt.Sprintf("Point %.2f", g.Coordinates)
 }
 
-type FeatureCollection struct {
-	CRSReferencable
-	Features []Feature `json:"features"`
+func (g LineString) String() string {
+	if len(g.Coordinates) <= 8 {
+		return fmt.Sprintf("LineString %.2f", g.Coordinates)
+	} else {
+		return fmt.Sprintf("LineString %.2f...", g.Coordinates[0:8])
+	}
+}
+
+func (g Polygon) String() string {
+	if len(g.Coordinates[0]) <= 8 {
+		return fmt.Sprintf("Polygon %.2f", g.Coordinates[0])
+	} else {
+		return fmt.Sprintf("Polygon %.2f...", g.Coordinates[0][0:8])
+	}
 }

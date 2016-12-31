@@ -3,10 +3,36 @@
  */
 package geojson
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
+// MarshalGeometry returns a byte array encoding a GeoJSON geometry
+func MarshalGeometry(g Geometry) ([]byte, error) {
+	b, err := json.Marshal(g)
+	if err != nil {
+		return []byte{}, err
+	}
+	return b, err
+}
+
+// MarshalFeature returns a byte array encoding a GeoJSON Feature
+func MarshalFeature(f Feature) ([]byte, error) {
+	b, err := json.Marshal(f)
+	if err != nil {
+		return []byte{}, err
+	}
+	return b, err
+}
+
+// MarshalFeatureCollection returns a byte array encoding a GeoJSON FeatureCollection
+func MarshalFeatureCollection(fc FeatureCollection) ([]byte, error) {
+	b, err := json.Marshal(fc)
+	if err != nil {
+		return []byte{}, err
+	}
+	return b, err
+}
+
+/* MarshalJSON methods for all GeoJSON types */
 func (pt Point) MarshalJSON() ([]byte, error) {
 	var p struct {
 		CRSReferencable
@@ -125,21 +151,5 @@ func (fc FeatureCollection) MarshalJSON() ([]byte, error) {
 	collection.Crs = fc.Crs
 	collection.Features = fc.Features
 	b, err := json.Marshal(collection)
-	return b, err
-}
-
-func AsGeoJSON(g Geometry) ([]byte, error) {
-	b, err := json.Marshal(g)
-	if err != nil {
-		return []byte{}, err
-	}
-	return b, err
-}
-
-func MarshalFeature(f Feature) ([]byte, error) {
-	b, err := json.Marshal(f)
-	if err != nil {
-		return []byte{}, err
-	}
 	return b, err
 }
