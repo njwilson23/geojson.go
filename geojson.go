@@ -247,6 +247,24 @@ type GeometryCollection struct {
 	Geometries []Geometry
 }
 
+func (collection GeometryCollection) Bbox() *bbox {
+	bb := collection.Geometries[0].Bbox()
+	xmin := bb.xmin
+	ymin := bb.ymin
+	xmax := bb.xmax
+	ymax := bb.ymax
+	if len(collection.Geometries) > 1 {
+		for i := 1; i != len(collection.Geometries); i++ {
+			bb = collection.Geometries[i].Bbox()
+			xmin = math.Min(xmin, bb.xmin)
+			ymin = math.Min(ymin, bb.ymin)
+			xmax = math.Max(xmax, bb.xmin)
+			ymax = math.Max(ymax, bb.ymax)
+		}
+	}
+	return &bbox{xmin, ymin, xmax, ymax}
+}
+
 type FeatureCollection struct {
 	CRSReferencable
 	Type     string `json:"type"`
