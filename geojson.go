@@ -1,5 +1,6 @@
 /*
- * Package that models GeoJSON types
+ * Package that models GeoJSON types and makes marshaling and unmarshaling between
+ * Go structs and GeoJSON bytes simpler
  */
 package geojson
 

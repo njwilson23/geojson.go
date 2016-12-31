@@ -1,3 +1,6 @@
+/*
+ * Implements functions for unmarshaling GeoJSON bytes to structs
+ */
 package geojson
 
 import (
