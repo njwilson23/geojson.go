@@ -31,20 +31,20 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONResult, error) {
 	}
 	switch uknType.Type {
 	case "Feature":
-		var g Feature
-		err = json.Unmarshal(data, &g)
+		var feature Feature
+		err = json.Unmarshal(data, &feature)
 		if err != nil {
 			return result, errors.New("invalid GeoJSON: malformed Feature")
 		}
-		result.Features = append(result.Features, g)
+		result.Features = append(result.Features, feature)
 	case "FeatureCollection":
-		var g FeatureCollection
-		err = json.Unmarshal(data, &g)
+		var featureCollection FeatureCollection
+		err = json.Unmarshal(data, &featureCollection)
 		if err != nil {
 			return result, errors.New("invalid GeoJSON: malformed FeatureCollection")
 		}
-		for i := 0; i != len(g.Features); i++ {
-			result.Features = append(result.Features, g.Features[i])
+		for i := 0; i != len(featureCollection.Features); i++ {
+			result.Features = append(result.Features, featureCollection.Features[i])
 		}
 	default:
 		g, err := UnmarshalGeometry(data)
@@ -79,33 +79,33 @@ func UnmarshalGeometry(data []byte) (Geometry, error) {
 		}
 		return ls, nil
 	case "Polygon":
-		var pg Polygon
-		err = json.Unmarshal(data, &pg)
+		var poly Polygon
+		err = json.Unmarshal(data, &poly)
 		if err != nil {
-			return pg, errors.New("invalid GeoJSON: malformed Polygon")
+			return poly, errors.New("invalid GeoJSON: malformed Polygon")
 		}
-		return pg, nil
+		return poly, nil
 	case "MultiPoint":
-		var g MultiPoint
-		err = json.Unmarshal(data, &g)
+		var mp MultiPoint
+		err = json.Unmarshal(data, &mp)
 		if err != nil {
-			return g, errors.New("invalid GeoJSON: malformed MultiPoint")
+			return mp, errors.New("invalid GeoJSON: malformed MultiPoint")
 		}
-		return g, nil
+		return mp, nil
 	case "MultiLineString":
-		var g MultiLineString
-		err = json.Unmarshal(data, &g)
+		var mls MultiLineString
+		err = json.Unmarshal(data, &mls)
 		if err != nil {
-			return g, errors.New("invalid GeoJSON: malformed MultiLineString")
+			return mls, errors.New("invalid GeoJSON: malformed MultiLineString")
 		}
-		return g, nil
+		return mls, nil
 	case "MultiPolygon":
-		var g MultiPolygon
-		err = json.Unmarshal(data, &g)
+		var mpoly MultiPolygon
+		err = json.Unmarshal(data, &mpoly)
 		if err != nil {
-			return g, errors.New("invalid GeoJSON: malformed MultiPolygon")
+			return mpoly, errors.New("invalid GeoJSON: malformed MultiPolygon")
 		}
-		return g, nil
+		return mpoly, nil
 	case "GeometryCollection":
 		var collection GeometryCollection
 		var partial partialGeometryCollection

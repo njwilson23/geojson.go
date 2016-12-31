@@ -42,51 +42,6 @@ type Geometry interface {
 	GetCrs() *CRS
 }
 
-type Position interface {
-	Vertex() []float64
-	X() float64
-	Y() float64
-}
-
-type Position2 struct {
-	x, y float64
-}
-
-func (p *Position2) Vertex() []float64 {
-	vertex := make([]float64, 2)
-	vertex[0] = p.x
-	vertex[1] = p.y
-	return vertex
-}
-
-func (p *Position2) X() float64 {
-	return p.x
-}
-
-func (p *Position2) Y() float64 {
-	return p.y
-}
-
-type Position3 struct {
-	x, y, z float64
-}
-
-func (p *Position3) Vertex() []float64 {
-	vertex := make([]float64, 3)
-	vertex[0] = p.x
-	vertex[1] = p.y
-	vertex[2] = p.z
-	return vertex
-}
-
-func (p *Position3) X() float64 {
-	return p.x
-}
-
-func (p *Position3) Y() float64 {
-	return p.y
-}
-
 type Point struct {
 	CRSReferencable
 	Type        string    `json:"type"`
@@ -234,17 +189,10 @@ func (g MultiPolygon) Bbox() *bbox {
 
 }
 
-type Feature struct {
-	CRSReferencable
-	Type       string `json:"type"`
-	Geometry   Geometry
-	Properties map[string]string
-}
-
 type GeometryCollection struct {
 	CRSReferencable
-	Type       string `json:"type"`
-	Geometries []Geometry
+	Type       string     `json:"type"`
+	Geometries []Geometry `json:"geometries"`
 }
 
 func (collection GeometryCollection) Bbox() *bbox {
@@ -265,8 +213,16 @@ func (collection GeometryCollection) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
+type Feature struct {
+	CRSReferencable
+	Type       string      `json:"type"`
+	Id         string      `json:"id"`
+	Geometry   Geometry    `json:"geometry"`
+	Properties interface{} `json:"properties"`
+}
+
 type FeatureCollection struct {
 	CRSReferencable
-	Type     string `json:"type"`
-	Features []Feature
+	Type     string    `json:"type"`
+	Features []Feature `json:"features"`
 }
