@@ -33,6 +33,63 @@ type partialGeometryCollection struct {
 	Geometries []json.RawMessage `json:"geometries"`
 }
 
+type partialFeature struct {
+	CRSReferencable
+	Type       string                 `json:"type"`
+	Id         string                 `json:"id,omitempty"`
+	Properties map[string]interface{} `json:"properties"`
+	Geometry   json.RawMessage        `json:"geometry"`
+}
+
+type partialFeatureCollection struct {
+	CRSReferencable
+	Type     string            `json:"type"`
+	Features []json.RawMessage `json:"features"`
+}
+
+// AsOneGeometry returns a Geometry containing all Geometry-types
+func (g GeoJSONContents) AsOneGeometry() Geometry {
+	cnt := len(g.Points) + len(g.LineStrings) + len(g.Polygons) + len(g.MultiPoints) + len(g.MultiLineStrings) + len(g.MultiPolygons)
+	var retval Geometry
+	if cnt == 1 {
+		if len(g.Points) == 1 {
+			retval = g.Points[0]
+		} else if len(g.LineStrings) == 1 {
+			retval = g.LineStrings[0]
+		} else if len(g.Polygons) == 1 {
+			retval = g.Polygons[0]
+		} else if len(g.MultiPoints) == 1 {
+			retval = g.MultiPoints[0]
+		} else if len(g.MultiLineStrings) == 1 {
+			retval = g.MultiLineStrings[0]
+		} else if len(g.MultiPolygons) == 1 {
+			retval = g.MultiPolygons[0]
+		}
+	} else {
+		gc := new(GeometryCollection)
+		for i := 0; i != len(g.Points); i++ {
+			gc.Geometries = append(gc.Geometries, g.Points[i])
+		}
+		for i := 0; i != len(g.LineStrings); i++ {
+			gc.Geometries = append(gc.Geometries, g.LineStrings[i])
+		}
+		for i := 0; i != len(g.Polygons); i++ {
+			gc.Geometries = append(gc.Geometries, g.Polygons[i])
+		}
+		for i := 0; i != len(g.MultiPoints); i++ {
+			gc.Geometries = append(gc.Geometries, g.MultiPoints[i])
+		}
+		for i := 0; i != len(g.MultiLineStrings); i++ {
+			gc.Geometries = append(gc.Geometries, g.MultiLineStrings[i])
+		}
+		for i := 0; i != len(g.MultiPolygons); i++ {
+			gc.Geometries = append(gc.Geometries, g.MultiPolygons[i])
+		}
+		retval = gc
+	}
+	return retval
+}
+
 // UnmarshalGeoJSON unpacks Features and Geometries from a JSON byte array
 func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 	var uknType unknownGeoJSONType
@@ -91,7 +148,6 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 		result.MultiPolygons = append(result.MultiPolygons, mpoly)
 
 	case "GeometryCollection":
-
 		var partial partialGeometryCollection
 		err = json.Unmarshal(data, &partial)
 		if err != nil {
@@ -114,20 +170,42 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 		}
 
 	case "Feature":
-		var feature Feature
-		err = json.Unmarshal(data, &feature)
+		var partial partialFeature
+		err = json.Unmarshal(data, &partial)
 		if err != nil {
 			return result, errors.New("invalid GeoJSON: malformed Feature")
 		}
-		result.Features = append(result.Features, feature)
+
+		var subresult GeoJSONContents
+		subresult, err = UnmarshalGeoJSON(partial.Geometry)
+		if err != nil {
+			return result, err
+		}
+
+		feature := new(Feature)
+		feature.Crs = partial.Crs
+		feature.Id = partial.Id
+		feature.Properties = partial.Properties
+		feature.Geometry = subresult.AsOneGeometry()
+		result.Features = append(result.Features, *feature)
 
 	case "FeatureCollection":
-		var featureCollection FeatureCollection
-		err = json.Unmarshal(data, &featureCollection)
+		var partial partialFeatureCollection
+		err = json.Unmarshal(data, &partial)
 		if err != nil {
+			fmt.Println(err)
 			return result, errors.New("invalid GeoJSON: malformed FeatureCollection")
 		}
-		result.Features = append(result.Features, featureCollection.Features...)
+
+		var subresult GeoJSONContents
+		for i := 0; i != len(partial.Features); i++ {
+			subresult, err = UnmarshalGeoJSON(partial.Features[i])
+			if err != nil {
+				return result, err
+			}
+			result.Features = append(result.Features, subresult.Features[0])
+		}
+
 	default:
 		return result, errors.New(fmt.Sprintf("unrecognized type: %s", uknType.Type))
 	}

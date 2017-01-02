@@ -188,7 +188,7 @@ func TestMarshallMultiPolygon(t *testing.T) {
 func TestMarshalFeature(t *testing.T) {
 	f := new(Feature)
 	geom := NewPoint(3.0, 4.0)
-	prop := make(map[string]int64)
+	prop := make(map[string]interface{})
 	prop["a"] = 49
 	prop["b"] = 17
 	f.Crs = WGS84
@@ -294,6 +294,96 @@ func TestUnmarshalGeometryCollection(t *testing.T) {
   }`))
 	if err != nil {
 		fmt.Println(err)
+		t.Error()
+	}
+}
+
+func TestUnmarshalFeature(t *testing.T) {
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        "properties": {"prop0": "value0"}
+        }`))
+	if err != nil {
+		fmt.Println("error:", err)
+		t.Error()
+	}
+	if len(contents.Features) != 1 {
+		t.Fail()
+	}
+	_, ok := contents.Features[0].Geometry.(Point)
+	if !ok {
+		t.Fail()
+	}
+	_, ok = contents.Features[0].Geometry.(Polygon)
+	if ok {
+		t.Fail()
+	}
+	if contents.Features[0].Properties["prop0"] != "value0" {
+		t.Fail()
+	}
+}
+
+func TestUnmarshalFeatureCollection(t *testing.T) {
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "FeatureCollection",
+    "features": [
+      { "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        "properties": {"prop0": "value0"}
+        },
+      { "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+            ]
+          },
+        "properties": {
+          "prop0": "value0",
+          "prop1": 0.0
+          }
+        },
+      { "type": "Feature",
+         "geometry": {
+           "type": "Polygon",
+           "coordinates": [
+             [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+               [100.0, 1.0], [100.0, 0.0] ]
+             ]
+         },
+         "properties": {
+           "prop0": "value0",
+           "prop1": {"this": "that"}
+           }
+         }
+       ]
+     }`))
+	if err != nil {
+		fmt.Println("error:", err)
+		t.Error()
+	}
+	if len(contents.Features) != 3 {
+		t.Fail()
+	}
+	if contents.Features[0].Properties["prop0"] != "value0" {
+		t.Fail()
+	}
+	if contents.Features[1].Properties["prop1"] != 0.0 {
+		t.Fail()
+	}
+	_, ok := contents.Features[2].Properties["prop1"].(map[string]interface{})
+	if !ok {
+		t.Fail()
+	}
+	_, ok = contents.Features[0].Geometry.(Point)
+	if !ok {
+		t.Fail()
+	}
+	_, ok = contents.Features[1].Geometry.(LineString)
+	if !ok {
+		t.Fail()
+	}
+	_, ok = contents.Features[2].Geometry.(Polygon)
+	if !ok {
 		t.Fail()
 	}
 }

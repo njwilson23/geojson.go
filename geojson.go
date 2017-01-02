@@ -68,9 +68,9 @@ type GeometryCollection struct {
 
 type Feature struct {
 	CRSReferencable
-	Id         string      `json:"id,omitempty"`
-	Geometry   Geometry    `json:"geometry"`
-	Properties interface{} `json:"properties"`
+	Id         string                 `json:"id,omitempty"`
+	Geometry   Geometry               `json:"geometry"`
+	Properties map[string]interface{} `json:"properties"`
 }
 
 type FeatureCollection struct {
