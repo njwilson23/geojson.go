@@ -68,7 +68,7 @@ func UnmarshalGeometry(data []byte) (Geometry, error) {
 	var uknType unknownGeoJSONType
 	err := json.Unmarshal(data, &uknType)
 	if err != nil {
-		return NewPoint(0, 0), err
+		return new(Point), err
 	}
 	switch uknType.Type {
 	case "Point":
@@ -131,6 +131,6 @@ func UnmarshalGeometry(data []byte) (Geometry, error) {
 		}
 		return collection, nil
 	default:
-		return NewPoint(0, 0), errors.New(fmt.Sprintf("unrecognized GeoJSON type '%s'", uknType.Type))
+		return new(Point), errors.New(fmt.Sprintf("unrecognized GeoJSON type '%s'", uknType.Type))
 	}
 }
