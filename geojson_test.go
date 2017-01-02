@@ -22,7 +22,7 @@ var WGS84 *CRS = NameCRS("urn:ogc:def:crs:OGC::CRS84")
 func NewPoint(x ...float64) *Point {
 	g := new(Point)
 	g.Coordinates = x
-	g.Crs = *WGS84
+	g.Crs = WGS84
 	return g
 }
 
@@ -56,7 +56,7 @@ func NewLineString(x ...[]float64) *LineString {
 
 	g := new(LineString)
 	g.Coordinates = coordinates
-	g.Crs = *WGS84
+	g.Crs = WGS84
 	return g
 }
 
@@ -88,11 +88,27 @@ func NewPolygon2(x ...[]float64) *Polygon {
 
 	g := new(Polygon)
 	g.Coordinates = coordinates
-	g.Crs = *WGS84
+	g.Crs = WGS84
 	return g
 }
 
 /* TEST FUNCTIONS */
+
+func TestMarshalPointNoCrs(t *testing.T) {
+	point := new(Point)
+	point.Coordinates = []float64{3, 4}
+	b, err := MarshalGeometry(point)
+	if err != nil {
+		fmt.Println("error", err)
+		t.Fail()
+	}
+	ref := `{"type":"Point","coordinates":[3,4]}`
+	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
+		t.Fail()
+	}
+}
 
 func TestMarshalPoint(t *testing.T) {
 	point := NewPoint(3.0, 4.0)
@@ -142,7 +158,7 @@ func TestMarshalPolygon(t *testing.T) {
 func TestMarshallMultiPolygon(t *testing.T) {
 	// creates a two-part multipolygon, with a hole in the second part
 	mpoly := new(MultiPolygon)
-	mpoly.Crs = *WGS84
+	mpoly.Crs = WGS84
 	mpoly.Coordinates = [][][][]float64{
 		[][][]float64{
 			[][]float64{
@@ -175,7 +191,7 @@ func TestMarshalFeature(t *testing.T) {
 	prop := make(map[string]int64)
 	prop["a"] = 49
 	prop["b"] = 17
-	f.Crs = *WGS84
+	f.Crs = WGS84
 	f.Properties = prop
 	f.Geometry = geom
 	b, err := MarshalFeature(*f)

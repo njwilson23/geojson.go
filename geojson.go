@@ -15,11 +15,11 @@ type CRS struct {
 }
 
 type CRSReferencable struct {
-	Crs CRS `json:"crs,omitempty"`
+	Crs *CRS `json:"crs,omitempty"`
 }
 
 func (g CRSReferencable) GetCrs() *CRS {
-	return &g.Crs
+	return g.Crs
 }
 
 type bbox struct {
