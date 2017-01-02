@@ -60,6 +60,21 @@ func (ls LineString) MarshalJSON() ([]byte, error) {
 }
 
 func (poly Polygon) MarshalJSON() ([]byte, error) {
+	// enforce CCW winding on external rings and CW winding on internal rings
+	var ringArray [][][]float64
+	var ring [][]float64
+	var ccw bool
+	for i := 0; i != len(poly.Coordinates); i++ {
+		ring = poly.Coordinates[i]
+		ccw = isCounterClockwise(ring)
+		if (i != 0 && ccw) || (i == 0 && !ccw) {
+			for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
+				ring[j], ring[k] = ring[k], ring[j]
+			}
+		}
+		ringArray = append(ringArray, ring)
+	}
+
 	var p struct {
 		CRSReferencable
 		Type        string        `json:"type"`
@@ -67,7 +82,7 @@ func (poly Polygon) MarshalJSON() ([]byte, error) {
 	}
 	p.Type = "Polygon"
 	p.Crs = poly.Crs
-	p.Coordinates = poly.Coordinates
+	p.Coordinates = ringArray
 	b, err := json.Marshal(p)
 	return b, err
 }
@@ -99,6 +114,27 @@ func (mls MultiLineString) MarshalJSON() ([]byte, error) {
 }
 
 func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
+	// enforce CCW winding on external rings and CW winding on internal rings
+	var polygonArray [][][][]float64
+	var polygonCoords [][][]float64
+	var ringArray [][][]float64
+	var ring [][]float64
+	var ccw bool
+	for h := 0; h != len(mpoly.Coordinates); h++ {
+		polygonCoords = mpoly.Coordinates[h]
+		for i := 0; i != len(polygonCoords); i++ {
+			ring = polygonCoords[i]
+			ccw = isCounterClockwise(ring)
+			if (i != 0 && ccw) || (i == 0 && !ccw) {
+				for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
+					ring[j], ring[k] = ring[k], ring[j]
+				}
+			}
+			ringArray = append(ringArray, ring)
+		}
+		polygonArray = append(polygonArray, ringArray)
+	}
+
 	var p struct {
 		CRSReferencable
 		Type        string          `json:"type"`
@@ -106,7 +142,7 @@ func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
 	}
 	p.Type = "MultiPolygon"
 	p.Crs = mpoly.Crs
-	p.Coordinates = mpoly.Coordinates
+	p.Coordinates = polygonArray
 	b, err := json.Marshal(p)
 	return b, err
 }
