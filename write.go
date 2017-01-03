@@ -15,7 +15,7 @@ func MarshalGeometry(g Geometry) ([]byte, error) {
 }
 
 // MarshalFeature returns a byte array encoding a GeoJSON Feature
-func MarshalFeature(f Feature) ([]byte, error) {
+func MarshalFeature(f *Feature) ([]byte, error) {
 	b, err := json.Marshal(f)
 	if err != nil {
 		return []byte{}, err
@@ -24,7 +24,7 @@ func MarshalFeature(f Feature) ([]byte, error) {
 }
 
 // MarshalFeatureCollection returns a byte array encoding a GeoJSON FeatureCollection
-func MarshalFeatureCollection(fc FeatureCollection) ([]byte, error) {
+func MarshalFeatureCollection(fc *FeatureCollection) ([]byte, error) {
 	b, err := json.Marshal(fc)
 	if err != nil {
 		return []byte{}, err
@@ -33,7 +33,7 @@ func MarshalFeatureCollection(fc FeatureCollection) ([]byte, error) {
 }
 
 /* MarshalJSON methods for all GeoJSON types */
-func (pt Point) MarshalJSON() ([]byte, error) {
+func (pt *Point) MarshalJSON() ([]byte, error) {
 	var p struct {
 		CRSReferencable
 		Type        string    `json:"type"`
@@ -46,7 +46,7 @@ func (pt Point) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (ls LineString) MarshalJSON() ([]byte, error) {
+func (ls *LineString) MarshalJSON() ([]byte, error) {
 	var l struct {
 		CRSReferencable
 		Type        string      `json:"type"`
@@ -59,20 +59,31 @@ func (ls LineString) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (poly Polygon) MarshalJSON() ([]byte, error) {
+func validateRing(i int, ringPtr *[][]float64, ch chan bool) {
+	ccw := isCounterClockwise(ringPtr)
+	ring := *ringPtr
+	if (i != 0 && ccw) || (i == 0 && !ccw) {
+		for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
+			ring[j], ring[k] = ring[k], ring[j]
+		}
+		ch <- true
+	} else {
+		ch <- false
+	}
+}
+
+func (poly *Polygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
 	var ringArray [][][]float64
 	var ring [][]float64
-	var ccw bool
+	ch := make(chan bool, 4)
 	for i := 0; i != len(poly.Coordinates); i++ {
 		ring = poly.Coordinates[i]
-		ccw = isCounterClockwise(ring)
-		if (i != 0 && ccw) || (i == 0 && !ccw) {
-			for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
-				ring[j], ring[k] = ring[k], ring[j]
-			}
-		}
 		ringArray = append(ringArray, ring)
+		go validateRing(i, &ringArray[i], ch)
+	}
+	for i := 0; i != len(poly.Coordinates); i++ {
+		_ = <-ch
 	}
 
 	var p struct {
@@ -87,7 +98,7 @@ func (poly Polygon) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (mpt MultiPoint) MarshalJSON() ([]byte, error) {
+func (mpt *MultiPoint) MarshalJSON() ([]byte, error) {
 	var p struct {
 		CRSReferencable
 		Type        string      `json:"type"`
@@ -100,7 +111,7 @@ func (mpt MultiPoint) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (mls MultiLineString) MarshalJSON() ([]byte, error) {
+func (mls *MultiLineString) MarshalJSON() ([]byte, error) {
 	var l struct {
 		CRSReferencable
 		Type        string        `json:"type"`
@@ -113,24 +124,23 @@ func (mls MultiLineString) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
+func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
 	var polygonArray [][][][]float64
 	var polygonCoords [][][]float64
 	var ringArray [][][]float64
 	var ring [][]float64
-	var ccw bool
+	ch := make(chan bool, 4)
 	for h := 0; h != len(mpoly.Coordinates); h++ {
 		polygonCoords = mpoly.Coordinates[h]
+		ringArray = make([][][]float64, len(polygonCoords))
 		for i := 0; i != len(polygonCoords); i++ {
 			ring = polygonCoords[i]
-			ccw = isCounterClockwise(ring)
-			if (i != 0 && ccw) || (i == 0 && !ccw) {
-				for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
-					ring[j], ring[k] = ring[k], ring[j]
-				}
-			}
-			ringArray = append(ringArray, ring)
+			ringArray[i] = ring
+			go validateRing(i, &ringArray[i], ch)
+		}
+		for i := 0; i != len(polygonCoords); i++ {
+			_ = <-ch
 		}
 		polygonArray = append(polygonArray, ringArray)
 	}
@@ -147,7 +157,7 @@ func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (gc GeometryCollection) MarshalJSON() ([]byte, error) {
+func (gc *GeometryCollection) MarshalJSON() ([]byte, error) {
 	var collection struct {
 		CRSReferencable
 		Type       string     `json:"type"`
@@ -160,7 +170,7 @@ func (gc GeometryCollection) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (f Feature) MarshalJSON() ([]byte, error) {
+func (f *Feature) MarshalJSON() ([]byte, error) {
 	var feature struct {
 		CRSReferencable
 		Type       string      `json:"type"`
@@ -177,7 +187,7 @@ func (f Feature) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func (fc FeatureCollection) MarshalJSON() ([]byte, error) {
+func (fc *FeatureCollection) MarshalJSON() ([]byte, error) {
 	var collection struct {
 		CRSReferencable
 		Type     string    `json:"type"`

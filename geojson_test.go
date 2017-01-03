@@ -155,7 +155,7 @@ func TestMarshalPolygon(t *testing.T) {
 	}
 }
 
-func TestMarshallMultiPolygon(t *testing.T) {
+func TestMarshalMultiPolygon(t *testing.T) {
 	// creates a two-part multipolygon, with a hole in the second part
 	mpoly := new(MultiPolygon)
 	mpoly.Crs = WGS84
@@ -175,12 +175,14 @@ func TestMarshallMultiPolygon(t *testing.T) {
 		},
 	}
 	b, err := MarshalGeometry(mpoly)
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"MultiPolygon","coordinates":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[102,2],[103,2],[103,3],[102,3],[102,2]],[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0.2],[100.2,0.8],[100.8,0.8],[100.8,0.2],[100.2,0.2]]]]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"MultiPolygon","coordinates":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0.2],[100.2,0.8],[100.8,0.8],[100.8,0.2],[100.2,0.2]]]]}`
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
 	}
 	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
 		t.Fail()
 	}
 }
@@ -194,13 +196,15 @@ func TestMarshalFeature(t *testing.T) {
 	f.Crs = WGS84
 	f.Properties = prop
 	f.Geometry = geom
-	b, err := MarshalFeature(*f)
+	b, err := MarshalFeature(f)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
 	}
 	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Feature","geometry":{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Point","coordinates":[3,4]},"properties":{"a":49,"b":17}}`
 	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
 		t.Fail()
 	}
 }

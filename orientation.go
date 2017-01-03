@@ -5,9 +5,9 @@ func isLeft(q []float64, p0 []float64, p1 []float64) bool {
 	return ((p1[0]-p0[0])*(q[1]-p0[1]) - (q[0]-p0[0])*(p1[1]-p0[1])) > 0
 }
 
-func isCounterClockwise(ring [][]float64) bool {
+func isCounterClockwise(ring *[][]float64) bool {
 	var xmin, ymin float64
-	trimmedRing := ring[:len(ring)-1]
+	trimmedRing := (*ring)[:len(*ring)-1] // ignore the final duplicate position
 	xmin = trimmedRing[len(trimmedRing)-1][0]
 	ymin = trimmedRing[len(trimmedRing)-1][1]
 	imin := len(trimmedRing) - 1
