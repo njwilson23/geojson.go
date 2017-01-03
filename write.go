@@ -76,7 +76,7 @@ func (poly *Polygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
 	var ringArray [][][]float64
 	var ring [][]float64
-	ch := make(chan bool, 4)
+	ch := make(chan bool)
 	for i := 0; i != len(poly.Coordinates); i++ {
 		ring = poly.Coordinates[i]
 		ringArray = append(ringArray, ring)
@@ -130,7 +130,7 @@ func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 	var polygonCoords [][][]float64
 	var ringArray [][][]float64
 	var ring [][]float64
-	ch := make(chan bool, 4)
+	ch := make(chan bool)
 	for h := 0; h != len(mpoly.Coordinates); h++ {
 		polygonCoords = mpoly.Coordinates[h]
 		ringArray = make([][][]float64, len(polygonCoords))

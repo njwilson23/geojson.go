@@ -368,26 +368,4 @@ func TestUnmarshalFeatureCollection(t *testing.T) {
 	if len(contents.Features) != 3 {
 		t.Fail()
 	}
-	if contents.Features[0].Properties["prop0"] != "value0" {
-		t.Fail()
-	}
-	if contents.Features[1].Properties["prop1"] != 0.0 {
-		t.Fail()
-	}
-	_, ok := contents.Features[2].Properties["prop1"].(map[string]interface{})
-	if !ok {
-		t.Fail()
-	}
-	_, ok = contents.Features[0].Geometry.(*Point)
-	if !ok {
-		t.Fail()
-	}
-	_, ok = contents.Features[1].Geometry.(*LineString)
-	if !ok {
-		t.Fail()
-	}
-	_, ok = contents.Features[2].Geometry.(*Polygon)
-	if !ok {
-		t.Fail()
-	}
 }

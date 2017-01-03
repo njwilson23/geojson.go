@@ -100,10 +100,21 @@ func (g *GeoJSONContents) CoalesceGeometry() Geometry {
 // ouput, GeoJSONContents, is a flat listing of all Geometry and Feature objects
 // in the input bytes. Nested structure of the original GeoJSON is not
 // preserved.
-func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
+func UnmarshalGeoJSON(data []byte) (result GeoJSONContents, err error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			_, ok := r.(error)
+			if !ok {
+				err = errors.New("unknown panic occurred")
+			} else {
+				err = r.(error)
+			}
+		}
+	}()
+
 	var uknType unknownGeoJSONType
-	var result GeoJSONContents
-	err := json.Unmarshal(data, &uknType)
+	err = json.Unmarshal(data, &uknType)
 	if err != nil {
 		return result, err
 	}
@@ -164,13 +175,21 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 			return result, errors.New("invalid GeoJSON: malformed GeometryCollection")
 		}
 
+		ch := make(chan GeoJSONContents)
+
+		for i := 0; i != len(partial.Geometries); i++ {
+			go func(g []byte, ch chan GeoJSONContents) {
+				subresult, err := UnmarshalGeoJSON(g)
+				if err != nil {
+					panic(errors.New("failure unmarshalling child geometry"))
+				}
+				ch <- subresult
+			}(partial.Geometries[i], ch)
+		}
+
 		var subresult GeoJSONContents
 		for i := 0; i != len(partial.Geometries); i++ {
-			subresult, err = UnmarshalGeoJSON(partial.Geometries[i])
-			if err != nil {
-				return result, err
-			}
-
+			subresult = <-ch
 			result.Points = append(result.Points, subresult.Points...)
 			result.LineStrings = append(result.LineStrings, subresult.LineStrings...)
 			result.Polygons = append(result.Polygons, subresult.Polygons...)
@@ -207,17 +226,26 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 			return result, errors.New("invalid GeoJSON: malformed FeatureCollection")
 		}
 
+		ch := make(chan GeoJSONContents)
+
+		for i := 0; i != len(partial.Features); i++ {
+			go func(b []byte, ch chan GeoJSONContents) {
+				subresult, err := UnmarshalGeoJSON(b)
+				if err != nil {
+					panic(errors.New("failure unmarshalling child feature"))
+				}
+				ch <- subresult
+			}(partial.Features[i], ch)
+		}
+
 		var subresult GeoJSONContents
 		for i := 0; i != len(partial.Features); i++ {
-			subresult, err = UnmarshalGeoJSON(partial.Features[i])
-			if err != nil {
-				return result, err
-			}
+			subresult = <-ch
 			result.Features = append(result.Features, subresult.Features[0])
 		}
 
 	default:
 		return result, errors.New(fmt.Sprintf("unrecognized type: %s", uknType.Type))
 	}
-	return result, nil
+	return result, err
 }
