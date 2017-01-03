@@ -310,11 +310,11 @@ func TestUnmarshalFeature(t *testing.T) {
 	if len(contents.Features) != 1 {
 		t.Fail()
 	}
-	_, ok := contents.Features[0].Geometry.(Point)
+	_, ok := contents.Features[0].Geometry.(*Point)
 	if !ok {
 		t.Fail()
 	}
-	_, ok = contents.Features[0].Geometry.(Polygon)
+	_, ok = contents.Features[0].Geometry.(*Polygon)
 	if ok {
 		t.Fail()
 	}
@@ -374,15 +374,15 @@ func TestUnmarshalFeatureCollection(t *testing.T) {
 	if !ok {
 		t.Fail()
 	}
-	_, ok = contents.Features[0].Geometry.(Point)
+	_, ok = contents.Features[0].Geometry.(*Point)
 	if !ok {
 		t.Fail()
 	}
-	_, ok = contents.Features[1].Geometry.(LineString)
+	_, ok = contents.Features[1].Geometry.(*LineString)
 	if !ok {
 		t.Fail()
 	}
-	_, ok = contents.Features[2].Geometry.(Polygon)
+	_, ok = contents.Features[2].Geometry.(*Polygon)
 	if !ok {
 		t.Fail()
 	}

@@ -47,50 +47,59 @@ type partialFeatureCollection struct {
 	Features []json.RawMessage `json:"features"`
 }
 
-// AsOneGeometry returns a Geometry containing all Geometry-types
-func (g GeoJSONContents) AsOneGeometry() Geometry {
+func (g *GeoJSONContents) String() string {
+	return fmt.Sprintf("Points: %d\nLineStrings: %d\nPolygons: %d\nMultiPoints: %d\nMultiLineStrings: %d\nMultiPolygons: %d\nFeatures: %d\n",
+		len(g.Points), len(g.LineStrings), len(g.Polygons), len(g.MultiPoints),
+		len(g.MultiLineStrings), len(g.MultiPolygons), len(g.Features))
+}
+
+// CoalesceGeometry returns a Geometry containing all Geometry-types
+func (g *GeoJSONContents) CoalesceGeometry() Geometry {
 	cnt := len(g.Points) + len(g.LineStrings) + len(g.Polygons) + len(g.MultiPoints) + len(g.MultiLineStrings) + len(g.MultiPolygons)
 	var retval Geometry
 	if cnt == 1 {
 		if len(g.Points) == 1 {
-			retval = g.Points[0]
+			retval = &g.Points[0]
 		} else if len(g.LineStrings) == 1 {
-			retval = g.LineStrings[0]
+			retval = &g.LineStrings[0]
 		} else if len(g.Polygons) == 1 {
-			retval = g.Polygons[0]
+			retval = &g.Polygons[0]
 		} else if len(g.MultiPoints) == 1 {
-			retval = g.MultiPoints[0]
+			retval = &g.MultiPoints[0]
 		} else if len(g.MultiLineStrings) == 1 {
-			retval = g.MultiLineStrings[0]
+			retval = &g.MultiLineStrings[0]
 		} else if len(g.MultiPolygons) == 1 {
-			retval = g.MultiPolygons[0]
+			retval = &g.MultiPolygons[0]
 		}
 	} else {
 		gc := new(GeometryCollection)
 		for i := 0; i != len(g.Points); i++ {
-			gc.Geometries = append(gc.Geometries, g.Points[i])
+			gc.Geometries = append(gc.Geometries, &g.Points[i])
 		}
 		for i := 0; i != len(g.LineStrings); i++ {
-			gc.Geometries = append(gc.Geometries, g.LineStrings[i])
+			gc.Geometries = append(gc.Geometries, &g.LineStrings[i])
 		}
 		for i := 0; i != len(g.Polygons); i++ {
-			gc.Geometries = append(gc.Geometries, g.Polygons[i])
+			gc.Geometries = append(gc.Geometries, &g.Polygons[i])
 		}
 		for i := 0; i != len(g.MultiPoints); i++ {
-			gc.Geometries = append(gc.Geometries, g.MultiPoints[i])
+			gc.Geometries = append(gc.Geometries, &g.MultiPoints[i])
 		}
 		for i := 0; i != len(g.MultiLineStrings); i++ {
-			gc.Geometries = append(gc.Geometries, g.MultiLineStrings[i])
+			gc.Geometries = append(gc.Geometries, &g.MultiLineStrings[i])
 		}
 		for i := 0; i != len(g.MultiPolygons); i++ {
-			gc.Geometries = append(gc.Geometries, g.MultiPolygons[i])
+			gc.Geometries = append(gc.Geometries, &g.MultiPolygons[i])
 		}
 		retval = gc
 	}
 	return retval
 }
 
-// UnmarshalGeoJSON unpacks Features and Geometries from a JSON byte array
+// UnmarshalGeoJSON unpacks Features and Geometries from a JSON byte array The
+// ouput, GeoJSONContents, is a flat listing of all Geometry and Feature objects
+// in the input bytes. Nested structure of the original GeoJSON is not
+// preserved.
 func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 	var uknType unknownGeoJSONType
 	var result GeoJSONContents
@@ -98,6 +107,7 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 	if err != nil {
 		return result, err
 	}
+
 	switch uknType.Type {
 	case "Point":
 		var pt Point
@@ -186,7 +196,7 @@ func UnmarshalGeoJSON(data []byte) (GeoJSONContents, error) {
 		feature.Crs = partial.Crs
 		feature.Id = partial.Id
 		feature.Properties = partial.Properties
-		feature.Geometry = subresult.AsOneGeometry()
+		feature.Geometry = subresult.CoalesceGeometry()
 		result.Features = append(result.Features, *feature)
 
 	case "FeatureCollection":

@@ -18,7 +18,7 @@ type CRSReferencable struct {
 	Crs *CRS `json:"crs,omitempty"`
 }
 
-func (g CRSReferencable) GetCrs() *CRS {
+func (g *CRSReferencable) GetCrs() *CRS {
 	return g.Crs
 }
 
@@ -80,12 +80,12 @@ type FeatureCollection struct {
 
 /* Bbox methods */
 
-func (p Point) Bbox() *bbox {
+func (p *Point) Bbox() *bbox {
 	return &bbox{p.Coordinates[0], p.Coordinates[1],
 		p.Coordinates[0], p.Coordinates[1]}
 }
 
-func (g LineString) Bbox() *bbox {
+func (g *LineString) Bbox() *bbox {
 	xmin := g.Coordinates[0][0]
 	ymin := g.Coordinates[0][1]
 	xmax := g.Coordinates[0][0]
@@ -100,7 +100,7 @@ func (g LineString) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-func (g Polygon) Bbox() *bbox {
+func (g *Polygon) Bbox() *bbox {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
 	xmax := g.Coordinates[0][0][0]
@@ -115,7 +115,7 @@ func (g Polygon) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-func (g MultiPoint) Bbox() *bbox {
+func (g *MultiPoint) Bbox() *bbox {
 	xmin := g.Coordinates[0][0]
 	ymin := g.Coordinates[0][1]
 	xmax := g.Coordinates[0][0]
@@ -132,7 +132,7 @@ func (g MultiPoint) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-func (g MultiLineString) Bbox() *bbox {
+func (g *MultiLineString) Bbox() *bbox {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
 	xmax := g.Coordinates[0][0][0]
@@ -151,7 +151,7 @@ func (g MultiLineString) Bbox() *bbox {
 	return &bbox{xmin, ymin, xmax, ymax}
 }
 
-func (g MultiPolygon) Bbox() *bbox {
+func (g *MultiPolygon) Bbox() *bbox {
 	xmin := g.Coordinates[0][0][0][0]
 	ymin := g.Coordinates[0][0][0][1]
 	xmax := g.Coordinates[0][0][0][0]
@@ -171,7 +171,7 @@ func (g MultiPolygon) Bbox() *bbox {
 
 }
 
-func (collection GeometryCollection) Bbox() *bbox {
+func (collection *GeometryCollection) Bbox() *bbox {
 	bb := collection.Geometries[0].Bbox()
 	xmin := bb.xmin
 	ymin := bb.ymin
@@ -191,22 +191,26 @@ func (collection GeometryCollection) Bbox() *bbox {
 
 /* String methods */
 
-func (g Point) String() string {
-	return fmt.Sprintf("Point %.2f", g.Coordinates)
+func (g *Point) String() string {
+	return fmt.Sprintf("Point %.6f", g.Coordinates)
 }
 
-func (g LineString) String() string {
+func (g *LineString) String() string {
 	if len(g.Coordinates) <= 8 {
-		return fmt.Sprintf("LineString %.2f", g.Coordinates)
+		return fmt.Sprintf("LineString %.6f", g.Coordinates)
 	} else {
-		return fmt.Sprintf("LineString %.2f...", g.Coordinates[0:8])
+		return fmt.Sprintf("LineString %.6f...", g.Coordinates[0:8])
 	}
 }
 
-func (g Polygon) String() string {
+func (g *Polygon) String() string {
 	if len(g.Coordinates[0]) <= 8 {
-		return fmt.Sprintf("Polygon %.2f", g.Coordinates[0])
+		return fmt.Sprintf("Polygon %.6f", g.Coordinates[0])
 	} else {
-		return fmt.Sprintf("Polygon %.2f...", g.Coordinates[0][0:8])
+		return fmt.Sprintf("Polygon %.6f...", g.Coordinates[0][0:8])
 	}
+}
+
+func (g *GeometryCollection) String() string {
+	return fmt.Sprintf("GeometryCollection (%d members)", len(g.Geometries))
 }
