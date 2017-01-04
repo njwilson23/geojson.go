@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-/* CONVENIENCE FUNCTIONS FOR TESTING */
-
 // NameCRS returns a named CRS object
 // Note that for RFC 7946 compliance, WGS84 may be used
 func NameCRS(name string) *CRS {
@@ -17,80 +15,6 @@ func NameCRS(name string) *CRS {
 }
 
 var WGS84 *CRS = NameCRS("urn:ogc:def:crs:OGC::CRS84")
-
-// NewPoint creates a point with the provided coordinates
-func NewPoint(x ...float64) *Point {
-	g := new(Point)
-	g.Coordinates = x
-	g.Crs = WGS84
-	return g
-}
-
-func NewLineString(x ...[]float64) *LineString {
-	var ivert int
-	var nVertices int
-	var pos []float64
-	var coordinates [][]float64
-
-	if len(x) == 2 {
-
-		nVertices = len(x[0])
-		coordinates = make([][]float64, nVertices)
-		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = []float64{x[0][ivert], x[1][ivert]}
-			coordinates[ivert] = pos
-		}
-
-	} else if len(x) == 3 {
-
-		nVertices = len(x[0])
-		coordinates = make([][]float64, nVertices)
-		for ivert = 0; ivert != nVertices; ivert++ {
-			pos = []float64{x[0][ivert], x[1][ivert], x[2][ivert]}
-			coordinates[ivert] = pos
-		}
-
-	} else {
-		panic("NewLineString takes either 2 or 3 arguments of type []float64")
-	}
-
-	g := new(LineString)
-	g.Coordinates = coordinates
-	g.Crs = WGS84
-	return g
-}
-
-// NewPolygon2 is a convenience constructor for a 2D Polygon. It is called as
-// NewPolygon2(x, y, [x_sub1, y_sub1, [x_sub2, y_sub2]]...) where areguments
-// are slices of floats.
-func NewPolygon2(x ...[]float64) *Polygon {
-	var ip, ivert int
-	var nParts, nVertices int
-	var pos []float64
-	var coordinates [][][]float64
-
-	if (len(x) % 2) == 0 {
-
-		nParts = len(x) / 2
-		coordinates = make([][][]float64, nParts)
-		for ip = 0; ip != nParts; ip++ {
-			nVertices = len(x[ip*2])
-			coordinates[ip] = make([][]float64, nVertices)
-			for ivert = 0; ivert != nVertices; ivert++ {
-				pos = []float64{x[ip*2][ivert], x[ip*2+1][ivert]}
-				coordinates[ip][ivert] = pos
-			}
-		}
-
-	} else {
-		panic("NewPolygon2 called with odd number of arguments")
-	}
-
-	g := new(Polygon)
-	g.Coordinates = coordinates
-	g.Crs = WGS84
-	return g
-}
 
 /* TEST FUNCTIONS */
 
@@ -111,7 +35,7 @@ func TestMarshalPointNoCrs(t *testing.T) {
 }
 
 func TestMarshalPoint(t *testing.T) {
-	point := NewPoint(3.0, 4.0)
+	point := &Point{CRSReferencable{WGS84}, []float64{3.0, 4.0}}
 	b, err := MarshalGeometry(point)
 	if err != nil {
 		fmt.Println("error", err)
@@ -126,10 +50,12 @@ func TestMarshalPoint(t *testing.T) {
 }
 
 func TestMarshalLineString(t *testing.T) {
-	X := []float64{2.0, 3.0, 4.0}
-	Y := []float64{1.0, -2.0, -1.0}
-	point := NewLineString(X, Y)
-	b, err := MarshalGeometry(point)
+	lineString := new(LineString)
+	lineString.Coordinates = [][]float64{
+		[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
+	}
+	lineString.Crs = WGS84
+	b, err := MarshalGeometry(lineString)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
@@ -141,10 +67,14 @@ func TestMarshalLineString(t *testing.T) {
 }
 
 func TestMarshalPolygon(t *testing.T) {
-	X := []float64{2.0, 3.0, 4.0}
-	Y := []float64{1.0, -2.0, -1.0}
-	point := NewPolygon2(X, Y)
-	b, err := MarshalGeometry(point)
+	poly := new(Polygon)
+	poly.Coordinates = [][][]float64{
+		[][]float64{
+			[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
+		},
+	}
+	poly.Crs = WGS84
+	b, err := MarshalGeometry(poly)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
@@ -189,7 +119,7 @@ func TestMarshalMultiPolygon(t *testing.T) {
 
 func TestMarshalFeature(t *testing.T) {
 	f := new(Feature)
-	geom := NewPoint(3.0, 4.0)
+	geom := &Point{CRSReferencable{WGS84}, []float64{3.0, 4.0}}
 	prop := make(map[string]interface{})
 	prop["a"] = 49
 	prop["b"] = 17
@@ -218,48 +148,69 @@ func TestUnmarshalInvalid(t *testing.T) {
 }
 
 func TestUnmarshalPoint(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "Point", "coordinates": [100.0, 0.0] }`))
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Point", "coordinates": [100.0, 0.0] }`))
 	if err != nil {
 		fmt.Println(err)
+		t.Fail()
+	}
+	if len(contents.Points) != 1 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalLineString(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "LineString", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "LineString", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
 	if err != nil {
 		fmt.Println(err)
+		t.Fail()
+	}
+	if len(contents.LineStrings) != 1 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalPolygonNoHoles(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ] ] }`))
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ] ] }`))
 	if err != nil {
 		fmt.Println(err)
+		t.Fail()
+	}
+	if len(contents.Polygons) != 1 {
+		t.Fail()
+	}
+	if len(contents.Polygons[0].Coordinates) != 1 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalPolygonHoles(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
+	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
       [ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ] ] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
+	if len(contents.Polygons) != 1 {
+		t.Fail()
+	}
+	if len(contents.Polygons[0].Coordinates) != 2 {
+		t.Fail()
+	}
 }
 
 func TestUnmarshalMultiPoint(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPoint", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
+	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPoint", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
 	if err != nil {
 		fmt.Println(err)
+		t.Fail()
+	}
+	if len(contents.MultiPoints) != 1 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalMultiLineString(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{"type": "MultiLineString",
+	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiLineString",
     "coordinates": [
         [ [100.0, 0.0], [101.0, 1.0] ],
         [ [102.0, 2.0], [103.0, 3.0] ]
@@ -269,10 +220,13 @@ func TestUnmarshalMultiLineString(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
+	if len(contents.MultiLineStrings) != 1 {
+		t.Fail()
+	}
 }
 
 func TestUnmarshalMultiPolygon(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPolygon",
+	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPolygon",
     "coordinates": [
       [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
       [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -283,10 +237,13 @@ func TestUnmarshalMultiPolygon(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
+	if len(contents.MultiPolygons) != 1 {
+		t.Fail()
+	}
 }
 
 func TestUnmarshalGeometryCollection(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "GeometryCollection",
+	content, err := UnmarshalGeoJSON([]byte(`{ "type": "GeometryCollection",
     "geometries": [
       { "type": "Point",
         "coordinates": [100.0, 0.0]
@@ -299,6 +256,12 @@ func TestUnmarshalGeometryCollection(t *testing.T) {
 	if err != nil {
 		fmt.Println(err)
 		t.Error()
+	}
+	if len(content.Points) != 1 {
+		t.Fail()
+	}
+	if len(content.LineStrings) != 1 {
+		t.Fail()
 	}
 }
 
