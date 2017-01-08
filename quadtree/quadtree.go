@@ -36,7 +36,9 @@ func (q *QuadTree) Insert(pt Point, label int) error {
 	if q.Root == nil {
 		node = new(Node)
 		q.Root = node
-		q.Bbox = [4]float64{pt.X, pt.Y, pt.X, pt.Y}
+		if q.Bbox == [4]float64{0, 0, 0, 0} {
+			panic(errors.New("cannot insert without initializing QuadTree.Bbox"))
+		}
 	} else {
 		node = q.Root
 	}
@@ -171,6 +173,7 @@ func (q *QuadTree) Select(bbox *[4]float64) ([]int, error) {
 	var node *Node
 	var err error
 	var nodeBbox [4]float64
+	var tmpBbox *[4]float64
 	var xmid, ymid float64
 
 	labels := make([]int, 0)
@@ -191,24 +194,24 @@ func (q *QuadTree) Select(bbox *[4]float64) ([]int, error) {
 			xmid = 0.5 * (nodeBbox[0] + nodeBbox[2])
 			ymid = 0.5 * (nodeBbox[1] + nodeBbox[3])
 
-			nodeBbox = [4]float64{nodeBbox[0], nodeBbox[1], xmid, ymid}
-			if overlaps(bbox, &nodeBbox) {
-				nodeStack = append(nodeStack, nodebox{node.LL, &nodeBbox})
+			tmpBbox = &[4]float64{nodeBbox[0], nodeBbox[1], xmid, ymid}
+			if overlaps(bbox, tmpBbox) {
+				nodeStack = append(nodeStack, nodebox{node.LL, tmpBbox})
 			}
 
-			nodeBbox = [4]float64{nodeBbox[0], ymid, xmid, nodeBbox[3]}
-			if overlaps(bbox, &nodeBbox) {
-				nodeStack = append(nodeStack, nodebox{node.UL, &nodeBbox})
+			tmpBbox = &[4]float64{nodeBbox[0], ymid, xmid, nodeBbox[3]}
+			if overlaps(bbox, tmpBbox) {
+				nodeStack = append(nodeStack, nodebox{node.UL, tmpBbox})
 			}
 
-			nodeBbox = [4]float64{xmid, nodeBbox[1], nodeBbox[2], ymid}
-			if overlaps(bbox, &nodeBbox) {
-				nodeStack = append(nodeStack, nodebox{node.LR, &nodeBbox})
+			tmpBbox = &[4]float64{xmid, nodeBbox[1], nodeBbox[2], ymid}
+			if overlaps(bbox, tmpBbox) {
+				nodeStack = append(nodeStack, nodebox{node.LR, tmpBbox})
 			}
 
-			nodeBbox = [4]float64{xmid, ymid, nodeBbox[2], nodeBbox[3]}
-			if overlaps(bbox, &nodeBbox) {
-				nodeStack = append(nodeStack, nodebox{node.UR, &nodeBbox})
+			tmpBbox = &[4]float64{xmid, ymid, nodeBbox[2], nodeBbox[3]}
+			if overlaps(bbox, tmpBbox) {
+				nodeStack = append(nodeStack, nodebox{node.UR, tmpBbox})
 			}
 		}
 	}
