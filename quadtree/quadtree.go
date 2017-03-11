@@ -5,12 +5,14 @@ import (
 	"fmt"
 )
 
+// QuadTree represents a quadtree structure and contains a pointer to the trunk node
 type QuadTree struct {
 	Root        *Node
 	MaxChildren int
 	Bbox        [4]float64
 }
 
+// Node represents a quadtree node, containing either an array of positions and labels, or child nodes
 type Node struct {
 	Points []Point
 	Labels []int
@@ -20,16 +22,18 @@ type Node struct {
 	UR     *Node
 }
 
+// Point represents a two-dimensional position
 type Point struct {
 	X float64
 	Y float64
 }
 
+// Within returns true if the Point is inside a bounding box
 func (p *Point) Within(bbox *[4]float64) bool {
 	return (*bbox)[0] <= p.X && p.X < (*bbox)[2] && (*bbox)[1] <= p.Y && p.Y < (*bbox)[3]
 }
 
-// QuadTree.Insert() adds a Point and a label
+// Insert adds a Point and a label
 func (q *QuadTree) Insert(pt Point, label int) error {
 	var node *Node
 	var err error
@@ -121,8 +125,7 @@ func (q *QuadTree) Insert(pt Point, label int) error {
 	return err
 }
 
-// QuadTree.Get() returns the label of a matching point if present, and returns
-// a non-nil error if the point is missing
+// Get returns the label of a matching point if present, and returns a non-nil error if the point is missing
 func (q *QuadTree) Get(pt Point) (int, error) {
 
 	node := q.Root
@@ -169,6 +172,7 @@ type nodebox struct {
 	bbox *[4]float64
 }
 
+// Select returns the labels within a bounding box
 func (q *QuadTree) Select(bbox *[4]float64) ([]int, error) {
 	var node *Node
 	var err error
@@ -176,7 +180,8 @@ func (q *QuadTree) Select(bbox *[4]float64) ([]int, error) {
 	var tmpBbox *[4]float64
 	var xmid, ymid float64
 
-	labels := make([]int, 0)
+	var labels []int
+	//labels := make([]int, 0)
 	nodeStack := make([]nodebox, 1)
 	nodeStack[0] = nodebox{q.Root, &q.Bbox}
 
@@ -218,6 +223,7 @@ func (q *QuadTree) Select(bbox *[4]float64) ([]int, error) {
 	return labels, err
 }
 
+// Depth returns the total depth of a QuadTree
 func (q *QuadTree) Depth() int {
 	var node *Node
 	var depth, maxdepth int
@@ -250,6 +256,7 @@ func overlaps(bb0, bb1 *[4]float64) bool {
 //func (q *QuadTree) Delete(pt Point) (int, error) {
 //}
 
+// String returns a position in the format '(x,y)'
 func (pt Point) String() string {
 	return fmt.Sprintf("(%.4f,%.4f)", pt.X, pt.Y)
 }
