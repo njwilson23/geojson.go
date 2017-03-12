@@ -33,16 +33,19 @@ func (p *Point) Within(bbox *[4]float64) bool {
 	return (*bbox)[0] <= p.X && p.X < (*bbox)[2] && (*bbox)[1] <= p.Y && p.Y < (*bbox)[3]
 }
 
-// Insert adds a Point and a label
+// Insert adds a Point and a label. Returns a non-nil error when the tree
+// bounding box has not yet been initialized
 func (q *QuadTree) Insert(pt Point, label int) error {
 	var node *Node
 	var err error
+
+	if q.Bbox == [4]float64{0, 0, 0, 0} {
+		return errors.New("cannot insert without initializing QuadTree.Bbox")
+	}
+
 	if q.Root == nil {
 		node = new(Node)
 		q.Root = node
-		if q.Bbox == [4]float64{0, 0, 0, 0} {
-			panic(errors.New("cannot insert without initializing QuadTree.Bbox"))
-		}
 	} else {
 		node = q.Root
 	}
@@ -257,6 +260,6 @@ func overlaps(bb0, bb1 *[4]float64) bool {
 //}
 
 // String returns a position in the format '(x,y)'
-func (pt Point) String() string {
-	return fmt.Sprintf("(%.4f,%.4f)", pt.X, pt.Y)
+func (p Point) String() string {
+	return fmt.Sprintf("(%.4f,%.4f)", p.X, p.Y)
 }

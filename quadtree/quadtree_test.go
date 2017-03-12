@@ -147,6 +147,52 @@ func TestSelect(t *testing.T) {
 	}
 }
 
+func TestDepth(t *testing.T) {
+	quadtree := new(QuadTree)
+	quadtree.MaxChildren = 5
+	quadtree.Root = new(Node)
+	quadtree.Bbox = [4]float64{0, 0, 1, 1}
+
+	i := 0
+	for x := 0.0; x < 1.0; x = x + 0.02 {
+		for y := 0.0; y < 1.0; y = y + 0.02 {
+			quadtree.Insert(Point{x, y}, i)
+			i++
+		}
+	}
+
+	depth := quadtree.Depth()
+	if depth != 6 {
+		t.Fail()
+	}
+}
+
+// Should result in an error because the node bounding box has not been set
+func TestNoBbox(t *testing.T) {
+	quadtree := new(QuadTree)
+	quadtree.MaxChildren = 5
+
+	err := quadtree.Insert(Point{1.0, 1.0}, 0)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+// Should create a root Node
+func TestNoRoot(t *testing.T) {
+	quadtree := new(QuadTree)
+	quadtree.MaxChildren = 5
+	quadtree.Bbox = [4]float64{0, 0, 1, 1}
+
+	err := quadtree.Insert(Point{1.0, 1.0}, 0)
+	if err != nil {
+		t.Fail()
+	}
+	if quadtree.Root == nil {
+		t.Fail()
+	}
+}
+
 func BenchmarkBuildRandom(b *testing.B) {
 	quadtree := new(QuadTree)
 	quadtree.MaxChildren = 50
