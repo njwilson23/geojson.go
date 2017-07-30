@@ -79,7 +79,7 @@ func TestMarshalPolygon(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Polygon","coordinates":[[[4,-1],[3,-2],[2,1]]]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Polygon","coordinates":[[[4,-1],[3,-2],[2,1],[4,-1]]]}`
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}
@@ -332,3 +332,17 @@ func TestUnmarshalFeatureCollection(t *testing.T) {
 		t.Fail()
 	}
 }
+
+// func TestValidateClosedRing(t *testing.T) {
+// 	ring := [][]float64{[]float64{0, 0}, []float64{1, 0}, []float64{1, 1}, []float64{0, 1}}
+// 	corrections := make(chan bool)
+// 	validateRing(0, ring, corrections)
+// 	result := <-corrections
+// 	fmt.Println(result)
+// 	if result == false {
+// 		t.Fail()
+// 	}
+// 	if len(ring) != 5 {
+// 		t.Fail()
+// 	}
+// }

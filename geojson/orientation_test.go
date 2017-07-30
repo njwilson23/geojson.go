@@ -39,7 +39,7 @@ func TestRingWinding(t *testing.T) {
 		[]float64{1, 1},
 		[]float64{1, 0},
 		[]float64{0, 0}}
-	if isCounterClockwise(&ring) {
+	if isCounterClockwise(ring) {
 		t.Fail()
 	}
 
@@ -50,7 +50,7 @@ func TestRingWinding(t *testing.T) {
 		[]float64{1, 1},
 		[]float64{0, 1},
 		[]float64{0, 0}}
-	if !isCounterClockwise(&ring) {
+	if !isCounterClockwise(ring) {
 		t.Fail()
 	}
 }

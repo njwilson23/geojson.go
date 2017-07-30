@@ -59,31 +59,70 @@ func (ls *LineString) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
-func validateRing(i int, ringPtr *[][]float64, ch chan bool) {
-	ccw := isCounterClockwise(ringPtr)
-	ring := *ringPtr
-	if (i != 0 && ccw) || (i == 0 && !ccw) {
-		for j, k := 0, len(ring)-1; j < k; j, k = j+1, k-1 {
-			ring[j], ring[k] = ring[k], ring[j]
-		}
-		ch <- true
-	} else {
-		ch <- false
+// Ring wraps a coordinate ring with its hierarchical level
+type Ring struct {
+	i  int
+	cx [][]float64
+}
+
+// ringSender seeds an array of Rings into a channel
+func ringSender(ringSlice []Ring, ch chan<- Ring) {
+	for _, ring := range ringSlice {
+		ch <- ring
 	}
+	close(ch)
+}
+
+// closedEnforcer ensures that rings are closed
+func closedEnforcer(input <-chan Ring, output chan<- Ring) {
+	// ensure ring closed
+	for ring := range input {
+		last := ring.cx[len(ring.cx)-1]
+		for i, v := range ring.cx[0] {
+			if last[i] != v {
+				ring.cx = append(ring.cx, ring.cx[0])
+				break
+			}
+		}
+		output <- ring
+	}
+	close(output)
+}
+
+// windingEnforcer ensures that rings have the correct winding order
+func windingEnforcer(input <-chan Ring, output chan<- Ring) {
+	var ccw bool
+	for ring := range input {
+		// ensure ring winds correctly
+		ccw = isCounterClockwise(ring.cx)
+		if (ring.i != 0 && ccw) || (ring.i == 0 && !ccw) {
+			for j, k := 0, len(ring.cx)-1; j < k; j, k = j+1, k-1 {
+				ring.cx[j], ring.cx[k] = ring.cx[k], ring.cx[j]
+			}
+		}
+		output <- ring
+	}
+	close(output)
 }
 
 func (poly *Polygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
-	var ringArray [][][]float64
-	var ring [][]float64
-	ch := make(chan bool)
-	for i := 0; i != len(poly.Coordinates); i++ {
-		ring = poly.Coordinates[i]
-		ringArray = append(ringArray, ring)
-		go validateRing(i, &ringArray[i], ch)
+	chWinding := make(chan Ring)
+	chClosed := make(chan Ring)
+	chDone := make(chan Ring)
+
+	ringSlice := []Ring{}
+	for i, slc := range poly.Coordinates {
+		ringSlice = append(ringSlice, Ring{i, slc})
 	}
-	for i := 0; i != len(poly.Coordinates); i++ {
-		_ = <-ch
+
+	go ringSender(ringSlice, chWinding)
+	go windingEnforcer(chWinding, chClosed)
+	go closedEnforcer(chClosed, chDone)
+
+	coordinates := [][][]float64{}
+	for ring := range chDone {
+		coordinates = append(coordinates, ring.cx)
 	}
 
 	var p struct {
@@ -93,7 +132,7 @@ func (poly *Polygon) MarshalJSON() ([]byte, error) {
 	}
 	p.Type = "Polygon"
 	p.Crs = poly.Crs
-	p.Coordinates = ringArray
+	p.Coordinates = coordinates
 	b, err := json.Marshal(p)
 	return b, err
 }
@@ -126,23 +165,29 @@ func (mls *MultiLineString) MarshalJSON() ([]byte, error) {
 
 func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
-	var polygonArray [][][][]float64
-	var polygonCoords [][][]float64
-	var ringArray [][][]float64
-	var ring [][]float64
-	ch := make(chan bool)
-	for h := 0; h != len(mpoly.Coordinates); h++ {
-		polygonCoords = mpoly.Coordinates[h]
-		ringArray = make([][][]float64, len(polygonCoords))
-		for i := 0; i != len(polygonCoords); i++ {
-			ring = polygonCoords[i]
-			ringArray[i] = ring
-			go validateRing(i, &ringArray[i], ch)
+
+	chWinding := make(chan Ring)
+	chClosed := make(chan Ring)
+	chDone := make(chan Ring)
+
+	ringSlice := []Ring{}
+	for _, polycx := range mpoly.Coordinates {
+		for i, slc := range polycx {
+			ringSlice = append(ringSlice, Ring{i, slc})
 		}
-		for i := 0; i != len(polygonCoords); i++ {
-			_ = <-ch
+	}
+
+	go ringSender(ringSlice, chWinding)
+	go windingEnforcer(chWinding, chClosed)
+	go closedEnforcer(chClosed, chDone)
+
+	coordinates := [][][][]float64{}
+	for ring := range chDone {
+		if ring.i == 0 {
+			coordinates = append(coordinates, [][][]float64{ring.cx})
+		} else {
+			coordinates[len(coordinates)-1] = append(coordinates[len(coordinates)-1], ring.cx)
 		}
-		polygonArray = append(polygonArray, ringArray)
 	}
 
 	var p struct {
@@ -152,7 +197,7 @@ func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 	}
 	p.Type = "MultiPolygon"
 	p.Crs = mpoly.Crs
-	p.Coordinates = polygonArray
+	p.Coordinates = coordinates
 	b, err := json.Marshal(p)
 	return b, err
 }
