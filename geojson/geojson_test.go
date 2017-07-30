@@ -26,7 +26,7 @@ func TestMarshalPointNoCRS(t *testing.T) {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	ref := `{"type":"Point","coordinates":[3,4]}`
+	ref := `{"coordinates":[3,4],"type":"Point"}`
 	if strings.Compare(string(b), ref) != 0 {
 		fmt.Println("recieved    ", string(b))
 		fmt.Println("but expected", ref)
@@ -41,7 +41,7 @@ func TestMarshalPoint(t *testing.T) {
 		fmt.Println("error", err)
 		t.Fail()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Point","coordinates":[3,4]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[3,4],"type":"Point"}`
 	if strings.Compare(string(b), ref) != 0 {
 		fmt.Println("recieved    ", string(b))
 		fmt.Println("but expected", ref)
@@ -60,7 +60,7 @@ func TestMarshalLineString(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"LineString","coordinates":[[2,1],[3,-2],[4,-1]]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[2,1],[3,-2],[4,-1]],"type":"LineString"}`
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}
@@ -79,7 +79,7 @@ func TestMarshalPolygon(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Polygon","coordinates":[[[4,-1],[3,-2],[2,1],[4,-1]]]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[4,-1],[3,-2],[2,1],[4,-1]]],"type":"Polygon"}`
 	if strings.Compare(string(b), ref) != 0 {
 		t.Fail()
 	}
@@ -105,7 +105,7 @@ func TestMarshalMultiPolygon(t *testing.T) {
 		},
 	}
 	b, err := MarshalGeometry(mpoly)
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"MultiPolygon","coordinates":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0.2],[100.2,0.8],[100.8,0.8],[100.8,0.2],[100.2,0.2]]]]}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0.2],[100.2,0.8],[100.8,0.8],[100.8,0.2],[100.2,0.2]]]],"type":"MultiPolygon"}`
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
@@ -131,7 +131,7 @@ func TestMarshalFeature(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Feature","geometry":{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"type":"Point","coordinates":[3,4]},"properties":{"a":49,"b":17}}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"geometry":{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[3,4],"type":"Point"},"properties":{"a":49,"b":17},"type":"Feature"}`
 	if strings.Compare(string(b), ref) != 0 {
 		fmt.Println("recieved    ", string(b))
 		fmt.Println("but expected", ref)

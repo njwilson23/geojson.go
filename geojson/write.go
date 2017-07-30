@@ -34,27 +34,21 @@ func MarshalFeatureCollection(fc *FeatureCollection) ([]byte, error) {
 
 /* MarshalJSON methods for all GeoJSON types */
 func (pt *Point) MarshalJSON() ([]byte, error) {
-	var p struct {
-		CRSReferencable
-		Type        string    `json:"type"`
-		Coordinates []float64 `json:"coordinates"`
-	}
-	p.Type = "Point"
-	p.CRS = pt.CRS
-	p.Coordinates = pt.Coordinates
+	p := struct {
+		Point
+		Type string `json:"type"`
+	}{*pt, "Point"}
+
 	b, err := json.Marshal(p)
 	return b, err
 }
 
 func (ls *LineString) MarshalJSON() ([]byte, error) {
-	var l struct {
-		CRSReferencable
-		Type        string      `json:"type"`
-		Coordinates [][]float64 `json:"coordinates"`
-	}
-	l.Type = "LineString"
-	l.CRS = ls.CRS
-	l.Coordinates = ls.Coordinates
+	l := struct {
+		LineString
+		Type string `json:"type"`
+	}{*ls, "LineString"}
+
 	b, err := json.Marshal(l)
 	return b, err
 }
@@ -125,40 +119,31 @@ func (poly *Polygon) MarshalJSON() ([]byte, error) {
 		coordinates = append(coordinates, ring.cx)
 	}
 
-	var p struct {
-		CRSReferencable
-		Type        string        `json:"type"`
-		Coordinates [][][]float64 `json:"coordinates"`
-	}
-	p.Type = "Polygon"
-	p.CRS = poly.CRS
-	p.Coordinates = coordinates
+	p := struct {
+		Polygon
+		Type string `json:"type"`
+	}{Polygon{poly.CRSReferencable, coordinates}, "Polygon"}
+
 	b, err := json.Marshal(p)
 	return b, err
 }
 
 func (mpt *MultiPoint) MarshalJSON() ([]byte, error) {
-	var p struct {
-		CRSReferencable
-		Type        string      `json:"type"`
-		Coordinates [][]float64 `json:"coordinates"`
-	}
-	p.Type = "MultiPoint"
-	p.CRS = mpt.CRS
-	p.Coordinates = mpt.Coordinates
-	b, err := json.Marshal(p)
+	mp := struct {
+		MultiPoint
+		Type string `json:"type"`
+	}{*mpt, "MultiPoint"}
+
+	b, err := json.Marshal(mp)
 	return b, err
 }
 
 func (mls *MultiLineString) MarshalJSON() ([]byte, error) {
-	var l struct {
-		CRSReferencable
-		Type        string        `json:"type"`
-		Coordinates [][][]float64 `json:"coordinates"`
-	}
-	l.Type = "MultiMineString"
-	l.CRS = mls.CRS
-	l.Coordinates = mls.Coordinates
+	l := struct {
+		MultiLineString
+		Type string `json:"type"`
+	}{*mls, "MultiLineString"}
+
 	b, err := json.Marshal(l)
 	return b, err
 }
@@ -190,57 +175,41 @@ func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	var p struct {
-		CRSReferencable
-		Type        string          `json:"type"`
-		Coordinates [][][][]float64 `json:"coordinates"`
-	}
-	p.Type = "MultiPolygon"
-	p.CRS = mpoly.CRS
-	p.Coordinates = coordinates
+	p := struct {
+		MultiPolygon
+		Type string `json:"type"`
+	}{MultiPolygon{mpoly.CRSReferencable, coordinates}, "MultiPolygon"}
+
 	b, err := json.Marshal(p)
 	return b, err
 }
 
 func (gc *GeometryCollection) MarshalJSON() ([]byte, error) {
-	var collection struct {
-		CRSReferencable
-		Type       string     `json:"type"`
-		Geometries []Geometry `json:"geometry"`
-	}
-	collection.Type = "GeometryCollection"
-	collection.CRS = gc.CRS
-	collection.Geometries = gc.Geometries
+	collection := struct {
+		GeometryCollection
+		Type string `json:"type"`
+	}{*gc, "GeometryCollection"}
+
 	b, err := json.Marshal(collection)
 	return b, err
 }
 
 func (f *Feature) MarshalJSON() ([]byte, error) {
-	var feature struct {
-		CRSReferencable
-		Type       string      `json:"type"`
-		ID         string      `json:"id,omitempty"`
-		Geometry   Geometry    `json:"geometry"`
-		Properties interface{} `json:"properties"`
-	}
-	feature.Type = "Feature"
-	feature.ID = f.ID
-	feature.CRS = f.CRS
-	feature.Geometry = f.Geometry
-	feature.Properties = f.Properties
+	feature := struct {
+		Feature
+		Type string `json:"type"`
+	}{*f, "Feature"}
+
 	b, err := json.Marshal(feature)
 	return b, err
 }
 
 func (fc *FeatureCollection) MarshalJSON() ([]byte, error) {
-	var collection struct {
-		CRSReferencable
-		Type     string    `json:"type"`
-		Features []Feature `json:"geometry"`
-	}
-	collection.Type = "FeatureCollection"
-	collection.CRS = fc.CRS
-	collection.Features = fc.Features
+	collection := struct {
+		FeatureCollection
+		Type string `json:"type"`
+	}{*fc, "FeatureCollection"}
+
 	b, err := json.Marshal(collection)
 	return b, err
 }
