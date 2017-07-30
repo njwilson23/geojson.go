@@ -40,7 +40,7 @@ func (pt *Point) MarshalJSON() ([]byte, error) {
 		Coordinates []float64 `json:"coordinates"`
 	}
 	p.Type = "Point"
-	p.Crs = pt.Crs
+	p.CRS = pt.CRS
 	p.Coordinates = pt.Coordinates
 	b, err := json.Marshal(p)
 	return b, err
@@ -53,7 +53,7 @@ func (ls *LineString) MarshalJSON() ([]byte, error) {
 		Coordinates [][]float64 `json:"coordinates"`
 	}
 	l.Type = "LineString"
-	l.Crs = ls.Crs
+	l.CRS = ls.CRS
 	l.Coordinates = ls.Coordinates
 	b, err := json.Marshal(l)
 	return b, err
@@ -131,7 +131,7 @@ func (poly *Polygon) MarshalJSON() ([]byte, error) {
 		Coordinates [][][]float64 `json:"coordinates"`
 	}
 	p.Type = "Polygon"
-	p.Crs = poly.Crs
+	p.CRS = poly.CRS
 	p.Coordinates = coordinates
 	b, err := json.Marshal(p)
 	return b, err
@@ -144,7 +144,7 @@ func (mpt *MultiPoint) MarshalJSON() ([]byte, error) {
 		Coordinates [][]float64 `json:"coordinates"`
 	}
 	p.Type = "MultiPoint"
-	p.Crs = mpt.Crs
+	p.CRS = mpt.CRS
 	p.Coordinates = mpt.Coordinates
 	b, err := json.Marshal(p)
 	return b, err
@@ -157,7 +157,7 @@ func (mls *MultiLineString) MarshalJSON() ([]byte, error) {
 		Coordinates [][][]float64 `json:"coordinates"`
 	}
 	l.Type = "MultiMineString"
-	l.Crs = mls.Crs
+	l.CRS = mls.CRS
 	l.Coordinates = mls.Coordinates
 	b, err := json.Marshal(l)
 	return b, err
@@ -196,7 +196,7 @@ func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 		Coordinates [][][][]float64 `json:"coordinates"`
 	}
 	p.Type = "MultiPolygon"
-	p.Crs = mpoly.Crs
+	p.CRS = mpoly.CRS
 	p.Coordinates = coordinates
 	b, err := json.Marshal(p)
 	return b, err
@@ -209,7 +209,7 @@ func (gc *GeometryCollection) MarshalJSON() ([]byte, error) {
 		Geometries []Geometry `json:"geometry"`
 	}
 	collection.Type = "GeometryCollection"
-	collection.Crs = gc.Crs
+	collection.CRS = gc.CRS
 	collection.Geometries = gc.Geometries
 	b, err := json.Marshal(collection)
 	return b, err
@@ -219,13 +219,13 @@ func (f *Feature) MarshalJSON() ([]byte, error) {
 	var feature struct {
 		CRSReferencable
 		Type       string      `json:"type"`
-		Id         string      `json:"id,omitempty"`
+		ID         string      `json:"id,omitempty"`
 		Geometry   Geometry    `json:"geometry"`
 		Properties interface{} `json:"properties"`
 	}
 	feature.Type = "Feature"
-	feature.Id = f.Id
-	feature.Crs = f.Crs
+	feature.ID = f.ID
+	feature.CRS = f.CRS
 	feature.Geometry = f.Geometry
 	feature.Properties = f.Properties
 	b, err := json.Marshal(feature)
@@ -239,7 +239,7 @@ func (fc *FeatureCollection) MarshalJSON() ([]byte, error) {
 		Features []Feature `json:"geometry"`
 	}
 	collection.Type = "FeatureCollection"
-	collection.Crs = fc.Crs
+	collection.CRS = fc.CRS
 	collection.Features = fc.Features
 	b, err := json.Marshal(collection)
 	return b, err

@@ -18,7 +18,7 @@ var WGS84 *CRS = NameCRS("urn:ogc:def:crs:OGC::CRS84")
 
 /* TEST FUNCTIONS */
 
-func TestMarshalPointNoCrs(t *testing.T) {
+func TestMarshalPointNoCRS(t *testing.T) {
 	point := new(Point)
 	point.Coordinates = []float64{3, 4}
 	b, err := MarshalGeometry(point)
@@ -54,7 +54,7 @@ func TestMarshalLineString(t *testing.T) {
 	lineString.Coordinates = [][]float64{
 		[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
 	}
-	lineString.Crs = WGS84
+	lineString.CRS = WGS84
 	b, err := MarshalGeometry(lineString)
 	if err != nil {
 		fmt.Println("error", err)
@@ -73,7 +73,7 @@ func TestMarshalPolygon(t *testing.T) {
 			[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
 		},
 	}
-	poly.Crs = WGS84
+	poly.CRS = WGS84
 	b, err := MarshalGeometry(poly)
 	if err != nil {
 		fmt.Println("error", err)
@@ -88,7 +88,7 @@ func TestMarshalPolygon(t *testing.T) {
 func TestMarshalMultiPolygon(t *testing.T) {
 	// creates a two-part multipolygon, with a hole in the second part
 	mpoly := new(MultiPolygon)
-	mpoly.Crs = WGS84
+	mpoly.CRS = WGS84
 	mpoly.Coordinates = [][][][]float64{
 		[][][]float64{
 			[][]float64{
@@ -123,7 +123,7 @@ func TestMarshalFeature(t *testing.T) {
 	prop := make(map[string]interface{})
 	prop["a"] = 49
 	prop["b"] = 17
-	f.Crs = WGS84
+	f.CRS = WGS84
 	f.Properties = prop
 	f.Geometry = geom
 	b, err := MarshalFeature(f)

@@ -36,7 +36,7 @@ type partialGeometryCollection struct {
 type partialFeature struct {
 	CRSReferencable
 	Type       string                 `json:"type"`
-	Id         string                 `json:"id,omitempty"`
+	ID         string                 `json:"id,omitempty"`
 	Properties map[string]interface{} `json:"properties"`
 	Geometry   json.RawMessage        `json:"geometry"`
 }
@@ -212,8 +212,8 @@ func UnmarshalGeoJSON(data []byte) (result GeoJSONContents, err error) {
 		}
 
 		feature := new(Feature)
-		feature.Crs = partial.Crs
-		feature.Id = partial.Id
+		feature.CRS = partial.CRS
+		feature.ID = partial.ID
 		feature.Properties = partial.Properties
 		feature.Geometry = subresult.CoalesceGeometry()
 		result.Features = append(result.Features, *feature)

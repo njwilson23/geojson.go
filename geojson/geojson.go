@@ -15,11 +15,11 @@ type CRS struct {
 }
 
 type CRSReferencable struct {
-	Crs *CRS `json:"crs,omitempty"`
+	CRS *CRS `json:"crs,omitempty"`
 }
 
-func (g *CRSReferencable) GetCrs() *CRS {
-	return g.Crs
+func (g *CRSReferencable) GetCRS() *CRS {
+	return g.CRS
 }
 
 type bbox struct {
@@ -28,7 +28,7 @@ type bbox struct {
 
 type Geometry interface {
 	Bbox() *bbox
-	GetCrs() *CRS
+	GetCRS() *CRS
 }
 
 type Point struct {
@@ -68,7 +68,7 @@ type GeometryCollection struct {
 
 type Feature struct {
 	CRSReferencable
-	Id         string                 `json:"id,omitempty"`
+	ID         string                 `json:"id,omitempty"`
 	Geometry   Geometry               `json:"geometry"`
 	Properties map[string]interface{} `json:"properties"`
 }
