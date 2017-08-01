@@ -1,6 +1,7 @@
 package geojson
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -21,7 +22,7 @@ var WGS84 *CRS = NameCRS("urn:ogc:def:crs:OGC::CRS84")
 func TestMarshalPointNoCRS(t *testing.T) {
 	point := new(Point)
 	point.Coordinates = []float64{3, 4}
-	b, err := MarshalGeometry(point)
+	b, err := json.Marshal(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Fail()
@@ -36,7 +37,7 @@ func TestMarshalPointNoCRS(t *testing.T) {
 
 func TestMarshalPoint(t *testing.T) {
 	point := &Point{CRSReferencable{WGS84}, []float64{3.0, 4.0}}
-	b, err := MarshalGeometry(point)
+	b, err := json.Marshal(point)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Fail()
@@ -55,7 +56,7 @@ func TestMarshalLineString(t *testing.T) {
 		[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
 	}
 	lineString.CRS = WGS84
-	b, err := MarshalGeometry(lineString)
+	b, err := json.Marshal(lineString)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
@@ -74,13 +75,15 @@ func TestMarshalPolygon(t *testing.T) {
 		},
 	}
 	poly.CRS = WGS84
-	b, err := MarshalGeometry(poly)
+	b, err := json.Marshal(poly)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
 	}
 	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[4,-1],[3,-2],[2,1],[4,-1]]],"type":"Polygon"}`
 	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
 		t.Fail()
 	}
 }
@@ -104,7 +107,7 @@ func TestMarshalMultiPolygon(t *testing.T) {
 			},
 		},
 	}
-	b, err := MarshalGeometry(mpoly)
+	b, err := json.Marshal(mpoly)
 	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[[102,2],[103,2],[103,3],[102,3],[102,2]]],[[[100,0],[101,0],[101,1],[100,1],[100,0]],[[100.2,0.2],[100.2,0.8],[100.8,0.8],[100.8,0.2],[100.2,0.2]]]],"type":"MultiPolygon"}`
 	if err != nil {
 		fmt.Println("error", err)
@@ -117,16 +120,33 @@ func TestMarshalMultiPolygon(t *testing.T) {
 	}
 }
 
+func TestMarshalGeo(t *testing.T) {
+	geo := Geo{Type: "Point", Point: &Point{CRSReferencable: CRSReferencable{},
+		Coordinates: []float64{3, 4}}}
+
+	b, err := json.Marshal(geo)
+	if err != nil {
+		fmt.Println(err)
+		t.Error()
+	}
+	ref := `{"coordinates":[3,4],"type":"Point"}`
+	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
+		t.Fail()
+	}
+}
+
 func TestMarshalFeature(t *testing.T) {
-	f := new(Feature)
-	geom := &Point{CRSReferencable{WGS84}, []float64{3.0, 4.0}}
 	prop := make(map[string]interface{})
 	prop["a"] = 49
 	prop["b"] = 17
-	f.CRS = WGS84
-	f.Properties = prop
-	f.Geometry = geom
-	b, err := MarshalFeature(f)
+
+	f := &Feature{CRSReferencable: CRSReferencable{WGS84},
+		Geometry:   Geo{Type: "Point", Point: &Point{CRSReferencable{WGS84}, []float64{3.0, 4.0}}},
+		Properties: prop}
+
+	b, err := json.Marshal(f)
 	if err != nil {
 		fmt.Println("error", err)
 		t.Error()
@@ -141,76 +161,85 @@ func TestMarshalFeature(t *testing.T) {
 
 // TestUnmarshalInvalid ensures that an error is emitted when the type is not a valid GeoJSON type
 func TestUnmarshalInvalid(t *testing.T) {
-	_, err := UnmarshalGeoJSON([]byte(`{ "type": "FauxPoint", "coordinates": [100.0, 0.0] }`))
+	_, err := UnmarshalGeoJSON2([]byte(`{ "type": "FauxPoint", "coordinates": [100.0, 0.0] }`))
 	if err == nil {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalPoint(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Point", "coordinates": [100.0, 0.0] }`))
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "Point", "coordinates": [100.0, 0.0] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.Points) != 1 {
+	if len(geo.Point.Coordinates) != 2 {
 		t.Fail()
+	}
+	expected := []float64{100, 0}
+	for i, v := range expected {
+		if geo.Point.Coordinates[i] != v {
+			t.Fail()
+		}
 	}
 }
 
 func TestUnmarshalLineString(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "LineString", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "LineString", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.LineStrings) != 1 {
+	if len(geo.LineString.Coordinates) != 2 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalPolygonNoHoles(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ] ] }`))
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ] ] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.Polygons) != 1 {
+	if len(geo.Polygon.Coordinates) != 1 {
 		t.Fail()
 	}
-	if len(contents.Polygons[0].Coordinates) != 1 {
+	if len(geo.Polygon.Coordinates[0]) != 5 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalPolygonHoles(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "Polygon", "coordinates": [ [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
       [ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ] ] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.Polygons) != 1 {
+	if len(geo.Polygon.Coordinates) != 2 {
 		t.Fail()
 	}
-	if len(contents.Polygons[0].Coordinates) != 2 {
+	if len(geo.Polygon.Coordinates[0]) != 5 {
+		t.Fail()
+	}
+	if len(geo.Polygon.Coordinates[1]) != 5 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalMultiPoint(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPoint", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
+	geo, err := UnmarshalGeoJSON2([]byte(`{"type": "MultiPoint", "coordinates": [ [100.0, 0.0], [101.0, 1.0] ] }`))
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.MultiPoints) != 1 {
+	if len(geo.MultiPoint.Coordinates) != 2 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalMultiLineString(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiLineString",
+	geo, err := UnmarshalGeoJSON2([]byte(`{"type": "MultiLineString",
     "coordinates": [
         [ [100.0, 0.0], [101.0, 1.0] ],
         [ [102.0, 2.0], [103.0, 3.0] ]
@@ -220,13 +249,13 @@ func TestUnmarshalMultiLineString(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.MultiLineStrings) != 1 {
+	if len(geo.MultiLineString.Coordinates) != 2 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalMultiPolygon(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{"type": "MultiPolygon",
+	geo, err := UnmarshalGeoJSON2([]byte(`{"type": "MultiPolygon",
     "coordinates": [
       [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
       [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -237,13 +266,13 @@ func TestUnmarshalMultiPolygon(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
-	if len(contents.MultiPolygons) != 1 {
+	if len(geo.MultiPolygon.Coordinates) != 2 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalGeometryCollection(t *testing.T) {
-	content, err := UnmarshalGeoJSON([]byte(`{ "type": "GeometryCollection",
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "GeometryCollection",
     "geometries": [
       { "type": "Point",
         "coordinates": [100.0, 0.0]
@@ -257,41 +286,33 @@ func TestUnmarshalGeometryCollection(t *testing.T) {
 		fmt.Println(err)
 		t.Error()
 	}
-	if len(content.Points) != 1 {
-		t.Fail()
-	}
-	if len(content.LineStrings) != 1 {
+	if len(geo.GeometryCollection.Geometries) != 2 {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalFeature(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
-        "properties": {"prop0": "value0"}
-        }`))
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "Feature",
+         "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+         "properties": {"prop0": "value0"}
+         }`))
 	if err != nil {
 		fmt.Println("error:", err)
 		t.Error()
 	}
-	if len(contents.Features) != 1 {
+	if geo.Feature.Geometry.Type != "Point" {
 		t.Fail()
 	}
-	_, ok := contents.Features[0].Geometry.(*Point)
-	if !ok {
+	if len(geo.Feature.Geometry.Point.Coordinates) != 2 {
 		t.Fail()
 	}
-	_, ok = contents.Features[0].Geometry.(*Polygon)
-	if ok {
-		t.Fail()
-	}
-	if contents.Features[0].Properties["prop0"] != "value0" {
+	if geo.Feature.Properties["prop0"] != "value0" {
 		t.Fail()
 	}
 }
 
 func TestUnmarshalFeatureCollection(t *testing.T) {
-	contents, err := UnmarshalGeoJSON([]byte(`{ "type": "FeatureCollection",
+	geo, err := UnmarshalGeoJSON2([]byte(`{ "type": "FeatureCollection",
     "features": [
       { "type": "Feature",
         "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
@@ -328,21 +349,7 @@ func TestUnmarshalFeatureCollection(t *testing.T) {
 		fmt.Println("error:", err)
 		t.Error()
 	}
-	if len(contents.Features) != 3 {
+	if len(geo.FeatureCollection.Features) != 3 {
 		t.Fail()
 	}
 }
-
-// func TestValidateClosedRing(t *testing.T) {
-// 	ring := [][]float64{[]float64{0, 0}, []float64{1, 0}, []float64{1, 1}, []float64{0, 1}}
-// 	corrections := make(chan bool)
-// 	validateRing(0, ring, corrections)
-// 	result := <-corrections
-// 	fmt.Println(result)
-// 	if result == false {
-// 		t.Fail()
-// 	}
-// 	if len(ring) != 5 {
-// 		t.Fail()
-// 	}
-// }

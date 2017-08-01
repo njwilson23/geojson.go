@@ -3,51 +3,29 @@
  */
 package geojson
 
-import "encoding/json"
-
-// MarshalGeometry returns a byte array encoding a GeoJSON geometry
-func MarshalGeometry(g Geometry) ([]byte, error) {
-	b, err := json.Marshal(g)
-	if err != nil {
-		return []byte{}, err
-	}
-	return b, err
-}
-
-// MarshalFeature returns a byte array encoding a GeoJSON Feature
-func MarshalFeature(f *Feature) ([]byte, error) {
-	b, err := json.Marshal(f)
-	if err != nil {
-		return []byte{}, err
-	}
-	return b, err
-}
-
-// MarshalFeatureCollection returns a byte array encoding a GeoJSON FeatureCollection
-func MarshalFeatureCollection(fc *FeatureCollection) ([]byte, error) {
-	b, err := json.Marshal(fc)
-	if err != nil {
-		return []byte{}, err
-	}
-	return b, err
-}
+import (
+	"encoding/json"
+	"fmt"
+)
 
 /* MarshalJSON methods for all GeoJSON types */
-func (pt *Point) MarshalJSON() ([]byte, error) {
+func (pt Point) MarshalJSON() ([]byte, error) {
 	p := struct {
-		Point
-		Type string `json:"type"`
-	}{*pt, "Point"}
+		CRS         *CRS      `json:"crs,omitempty"`
+		Coordinates []float64 `json:"coordinates"`
+		Type        string    `json:"type"`
+	}{pt.CRS, pt.Coordinates, "Point"}
 
 	b, err := json.Marshal(p)
 	return b, err
 }
 
-func (ls *LineString) MarshalJSON() ([]byte, error) {
+func (ls LineString) MarshalJSON() ([]byte, error) {
 	l := struct {
-		LineString
-		Type string `json:"type"`
-	}{*ls, "LineString"}
+		CRS         *CRS        `json:"crs,omitempty"`
+		Coordinates [][]float64 `json:"coordinates,omitempty"`
+		Type        string      `json:"type"`
+	}{ls.CRS, ls.Coordinates, "LineString"}
 
 	b, err := json.Marshal(l)
 	return b, err
@@ -99,7 +77,7 @@ func windingEnforcer(input <-chan Ring, output chan<- Ring) {
 	close(output)
 }
 
-func (poly *Polygon) MarshalJSON() ([]byte, error) {
+func (poly Polygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
 	chWinding := make(chan Ring)
 	chClosed := make(chan Ring)
@@ -120,35 +98,38 @@ func (poly *Polygon) MarshalJSON() ([]byte, error) {
 	}
 
 	p := struct {
-		Polygon
-		Type string `json:"type"`
-	}{Polygon{poly.CRSReferencable, coordinates}, "Polygon"}
+		CRS         *CRS          `json:"crs,omitempty"`
+		Coordinates [][][]float64 `json:"coordinates,omitempty"`
+		Type        string        `json:"type"`
+	}{poly.CRS, coordinates, "Polygon"}
 
 	b, err := json.Marshal(p)
 	return b, err
 }
 
-func (mpt *MultiPoint) MarshalJSON() ([]byte, error) {
+func (mpt MultiPoint) MarshalJSON() ([]byte, error) {
 	mp := struct {
-		MultiPoint
-		Type string `json:"type"`
-	}{*mpt, "MultiPoint"}
+		CRS         *CRS        `json:"crs,omitempty"`
+		Coordinates [][]float64 `json:"coordinates,omitempty"`
+		Type        string      `json:"type"`
+	}{mpt.CRS, mpt.Coordinates, "MultiPoint"}
 
 	b, err := json.Marshal(mp)
 	return b, err
 }
 
-func (mls *MultiLineString) MarshalJSON() ([]byte, error) {
+func (mls MultiLineString) MarshalJSON() ([]byte, error) {
 	l := struct {
-		MultiLineString
-		Type string `json:"type"`
-	}{*mls, "MultiLineString"}
+		CRS         *CRS          `json:"crs,omitempty"`
+		Coordinates [][][]float64 `json:"coordinates"`
+		Type        string        `json:"type"`
+	}{mls.CRS, mls.Coordinates, "MultiLineString"}
 
 	b, err := json.Marshal(l)
 	return b, err
 }
 
-func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
+func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
 	// enforce CCW winding on external rings and CW winding on internal rings
 
 	chWinding := make(chan Ring)
@@ -176,40 +157,74 @@ func (mpoly *MultiPolygon) MarshalJSON() ([]byte, error) {
 	}
 
 	p := struct {
-		MultiPolygon
-		Type string `json:"type"`
-	}{MultiPolygon{mpoly.CRSReferencable, coordinates}, "MultiPolygon"}
+		CRS         *CRS            `json:"crs,omitempty"`
+		Coordinates [][][][]float64 `json:"coordinates"`
+		Type        string          `json:"type"`
+	}{mpoly.CRS, coordinates, "MultiPolygon"}
 
 	b, err := json.Marshal(p)
 	return b, err
 }
 
-func (gc *GeometryCollection) MarshalJSON() ([]byte, error) {
+func (gc GeometryCollection) MarshalJSON() ([]byte, error) {
 	collection := struct {
-		GeometryCollection
-		Type string `json:"type"`
-	}{*gc, "GeometryCollection"}
+		CRS        *CRS   `json:"crs,omitempty"`
+		Geometries []*Geo `json:"geometries"`
+		Type       string `json:"type"`
+	}{gc.CRS, gc.Geometries, "GeometryCollection"}
 
 	b, err := json.Marshal(collection)
 	return b, err
 }
 
-func (f *Feature) MarshalJSON() ([]byte, error) {
+func (f Feature) MarshalJSON() ([]byte, error) {
 	feature := struct {
-		Feature
-		Type string `json:"type"`
-	}{*f, "Feature"}
+		CRS        *CRS                   `json:"crs,omitempty"`
+		ID         string                 `json:"string,omitempty"`
+		Geometry   Geo                    `json:"geometry"`
+		Properties map[string]interface{} `json:"properties"`
+		Type       string                 `json:"type"`
+	}{f.CRS, "", f.Geometry, f.Properties, "Feature"}
 
 	b, err := json.Marshal(feature)
 	return b, err
 }
 
-func (fc *FeatureCollection) MarshalJSON() ([]byte, error) {
+func (fc FeatureCollection) MarshalJSON() ([]byte, error) {
 	collection := struct {
-		FeatureCollection
-		Type string `json:"type"`
-	}{*fc, "FeatureCollection"}
+		CRS      *CRS      `json:"crs,omitempty"`
+		Features []Feature `json:"features"`
+		Type     string    `json:"type"`
+	}{fc.CRS, fc.Features, "FeatureCollection"}
 
 	b, err := json.Marshal(collection)
+	return b, err
+}
+
+func (g Geo) MarshalJSON() ([]byte, error) {
+	var b []byte
+	var err error
+	switch g.Type {
+	case "Point":
+		b, err = g.Point.MarshalJSON()
+	case "LineString":
+		b, err = g.LineString.MarshalJSON()
+	case "Polygon":
+		b, err = g.Polygon.MarshalJSON()
+	case "MultiPoint":
+		b, err = g.MultiPoint.MarshalJSON()
+	case "MultiLineString":
+		b, err = g.MultiLineString.MarshalJSON()
+	case "MultiPolygon":
+		b, err = g.MultiPolygon.MarshalJSON()
+	case "GeometryCollection":
+		b, err = g.GeometryCollection.MarshalJSON()
+	case "Feature":
+		b, err = g.Feature.MarshalJSON()
+	case "FeatureCollection":
+		b, err = g.FeatureCollection.MarshalJSON()
+	default:
+		err = fmt.Errorf("unhandled type: '%s'", g.Type)
+	}
 	return b, err
 }
