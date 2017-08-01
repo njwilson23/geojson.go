@@ -26,6 +26,7 @@ type bbox struct {
 	xmin, ymin, xmax, ymax float64
 }
 
+// Geo represents a GeoJSON entity
 type Geo struct {
 	Type               string
 	Point              *Point
@@ -65,9 +66,8 @@ func (g *Geo) Bbox() (bb *bbox, err error) {
 	return
 }
 
-type Geometry interface {
+type Boundable interface {
 	Bbox() (*bbox, error)
-	GetCRS() *CRS
 }
 
 type Point struct {
@@ -252,21 +252,33 @@ func (g *Point) String() string {
 }
 
 func (g *LineString) String() string {
-	if len(g.Coordinates) <= 8 {
-		return fmt.Sprintf("LineString %.6f", g.Coordinates)
-	} else {
-		return fmt.Sprintf("LineString %.6f...", g.Coordinates[0:8])
-	}
+	return fmt.Sprintf("LineString[%d]", len(g.Coordinates))
 }
 
 func (g *Polygon) String() string {
-	if len(g.Coordinates[0]) <= 8 {
-		return fmt.Sprintf("Polygon %.6f", g.Coordinates[0])
-	} else {
-		return fmt.Sprintf("Polygon %.6f...", g.Coordinates[0][0:8])
-	}
+	return fmt.Sprintf("Polygon[%d]", len(g.Coordinates))
+}
+
+func (g *MultiPoint) String() string {
+	return fmt.Sprintf("MultiPoint %.6f", g.Coordinates)
+}
+
+func (g *MultiLineString) String() string {
+	return fmt.Sprintf("MultiLineString[%d]", len(g.Coordinates))
+}
+
+func (g *MultiPolygon) String() string {
+	return fmt.Sprintf("MultiPolygon[%d]", len(g.Coordinates))
 }
 
 func (g *GeometryCollection) String() string {
-	return fmt.Sprintf("GeometryCollection (%d members)", len(g.Geometries))
+	return fmt.Sprintf("GeometryCollection[%d]", len(g.Geometries))
+}
+
+func (f *Feature) String() string {
+	return fmt.Sprintf("Feature(%s)", f.Geometry.Type)
+}
+
+func (fc *FeatureCollection) String() string {
+	return fmt.Sprintf("FeatureCollection[%d]", len(fc.Features))
 }
