@@ -22,7 +22,7 @@ func (g *CRSReferencable) GetCRS() *CRS {
 	return g.CRS
 }
 
-type bbox struct {
+type Bbox struct {
 	xmin, ymin, xmax, ymax float64
 }
 
@@ -40,7 +40,7 @@ type Geo struct {
 	FeatureCollection  *FeatureCollection
 }
 
-func (g *Geo) Bbox() (bb *bbox, err error) {
+func (g *Geo) Bbox() (bb *Bbox, err error) {
 	switch g.Type {
 	case "Point":
 		bb, err = g.Point.Bbox()
@@ -67,7 +67,7 @@ func (g *Geo) Bbox() (bb *bbox, err error) {
 }
 
 type Boundable interface {
-	Bbox() (*bbox, error)
+	Bbox() (*Bbox, error)
 }
 
 type Point struct {
@@ -119,12 +119,12 @@ type FeatureCollection struct {
 
 /* Bbox methods */
 
-func (p *Point) Bbox() (*bbox, error) {
-	return &bbox{p.Coordinates[0], p.Coordinates[1],
+func (p *Point) Bbox() (*Bbox, error) {
+	return &Bbox{p.Coordinates[0], p.Coordinates[1],
 		p.Coordinates[0], p.Coordinates[1]}, nil
 }
 
-func (g *LineString) Bbox() (*bbox, error) {
+func (g *LineString) Bbox() (*Bbox, error) {
 	xmin := g.Coordinates[0][0]
 	ymin := g.Coordinates[0][1]
 	xmax := g.Coordinates[0][0]
@@ -136,10 +136,10 @@ func (g *LineString) Bbox() (*bbox, error) {
 		xmax = math.Max(g.Coordinates[i][0], xmax)
 		ymax = math.Max(g.Coordinates[i][1], ymax)
 	}
-	return &bbox{xmin, ymin, xmax, ymax}, nil
+	return &Bbox{xmin, ymin, xmax, ymax}, nil
 }
 
-func (g *Polygon) Bbox() (*bbox, error) {
+func (g *Polygon) Bbox() (*Bbox, error) {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
 	xmax := g.Coordinates[0][0][0]
@@ -151,10 +151,10 @@ func (g *Polygon) Bbox() (*bbox, error) {
 		xmax = math.Max(g.Coordinates[0][i][0], xmax)
 		ymax = math.Max(g.Coordinates[0][i][1], ymax)
 	}
-	return &bbox{xmin, ymin, xmax, ymax}, nil
+	return &Bbox{xmin, ymin, xmax, ymax}, nil
 }
 
-func (g *MultiPoint) Bbox() (*bbox, error) {
+func (g *MultiPoint) Bbox() (*Bbox, error) {
 	xmin := g.Coordinates[0][0]
 	ymin := g.Coordinates[0][1]
 	xmax := g.Coordinates[0][0]
@@ -168,10 +168,10 @@ func (g *MultiPoint) Bbox() (*bbox, error) {
 		xmax = math.Max(position[0], xmax)
 		ymax = math.Max(position[1], ymax)
 	}
-	return &bbox{xmin, ymin, xmax, ymax}, nil
+	return &Bbox{xmin, ymin, xmax, ymax}, nil
 }
 
-func (g *MultiLineString) Bbox() (*bbox, error) {
+func (g *MultiLineString) Bbox() (*Bbox, error) {
 	xmin := g.Coordinates[0][0][0]
 	ymin := g.Coordinates[0][0][1]
 	xmax := g.Coordinates[0][0][0]
@@ -187,10 +187,10 @@ func (g *MultiLineString) Bbox() (*bbox, error) {
 			ymax = math.Max(position[1], ymax)
 		}
 	}
-	return &bbox{xmin, ymin, xmax, ymax}, nil
+	return &Bbox{xmin, ymin, xmax, ymax}, nil
 }
 
-func (g *MultiPolygon) Bbox() (*bbox, error) {
+func (g *MultiPolygon) Bbox() (*Bbox, error) {
 	xmin := g.Coordinates[0][0][0][0]
 	ymin := g.Coordinates[0][0][0][1]
 	xmax := g.Coordinates[0][0][0][0]
@@ -206,13 +206,13 @@ func (g *MultiPolygon) Bbox() (*bbox, error) {
 			ymax = math.Max(position[1], ymax)
 		}
 	}
-	return &bbox{xmin, ymin, xmax, ymax}, nil
+	return &Bbox{xmin, ymin, xmax, ymax}, nil
 
 }
 
-func (collection *GeometryCollection) Bbox() (bb *bbox, err error) {
-	bboxes := make([]*bbox, len(collection.Geometries))
-	for _, g := range collection.Geometries {
+func (coll *GeometryCollection) Bbox() (bb *Bbox, err error) {
+	bboxes := make([]*Bbox, len(coll.Geometries))
+	for _, g := range coll.Geometries {
 		bb, err := g.Bbox()
 		if err != nil {
 			break
@@ -225,14 +225,14 @@ func (collection *GeometryCollection) Bbox() (bb *bbox, err error) {
 	return
 }
 
-func (f *Feature) Bbox() (bb *bbox, err error) {
+func (f *Feature) Bbox() (bb *Bbox, err error) {
 	bb, err = f.Geometry.Bbox()
 	return
 }
 
-func (fc *FeatureCollection) Bbox() (bb *bbox, err error) {
-	bboxes := make([]*bbox, len(fc.Features))
-	for _, f := range fc.Features {
+func (coll *FeatureCollection) Bbox() (bb *Bbox, err error) {
+	bboxes := make([]*Bbox, len(coll.Features))
+	for _, f := range coll.Features {
 		bb, err := f.Bbox()
 		if err != nil {
 			break
@@ -271,14 +271,14 @@ func (g *MultiPolygon) String() string {
 	return fmt.Sprintf("MultiPolygon[%d]", len(g.Coordinates))
 }
 
-func (g *GeometryCollection) String() string {
-	return fmt.Sprintf("GeometryCollection[%d]", len(g.Geometries))
+func (coll *GeometryCollection) String() string {
+	return fmt.Sprintf("GeometryCollection[%d]", len(coll.Geometries))
 }
 
 func (f *Feature) String() string {
 	return fmt.Sprintf("Feature(%s)", f.Geometry.Type)
 }
 
-func (fc *FeatureCollection) String() string {
-	return fmt.Sprintf("FeatureCollection[%d]", len(fc.Features))
+func (coll *FeatureCollection) String() string {
+	return fmt.Sprintf("FeatureCollection[%d]", len(coll.Features))
 }

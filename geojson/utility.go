@@ -5,8 +5,8 @@ import (
 	"math"
 )
 
-func unionBbox(bboxes []*bbox) (*bbox, error) {
-	bb := new(bbox)
+func unionBbox(bboxes []*Bbox) (*Bbox, error) {
+	bb := new(Bbox)
 	if len(bboxes) == 0 {
 		return bb, fmt.Errorf("union of empty set")
 	}
