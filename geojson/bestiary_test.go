@@ -14,7 +14,6 @@ func TestBestiary100(t *testing.T) {
 		t.Error()
 	}
 	g := geo.FeatureCollection.Features[0].Geometry
-	fmt.Println(g)
 	if g.Type != "GeometryCollection" {
 		t.Fail()
 	}
