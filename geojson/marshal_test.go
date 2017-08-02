@@ -65,11 +65,11 @@ func TestMarshalLineString(t *testing.T) {
 	}
 }
 
-func TestMarshalPolygon(t *testing.T) {
+func TestMarshalIncompleteBackwardsPolygon(t *testing.T) {
 	poly := new(Polygon)
 	poly.Coordinates = [][][]float64{
 		[][]float64{
-			[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0},
+			[]float64{0.0, 1.0}, []float64{2.0, 0.0}, []float64{0.0, -1.0},
 		},
 	}
 	poly.CRS = WGS84
@@ -78,7 +78,28 @@ func TestMarshalPolygon(t *testing.T) {
 		fmt.Println("error", err)
 		t.Error()
 	}
-	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[4,-1],[3,-2],[2,1],[4,-1]]],"type":"Polygon"}`
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[0,1],[0,-1],[2,0],[0,1]]],"type":"Polygon"}`
+	if strings.Compare(string(b), ref) != 0 {
+		fmt.Println("recieved    ", string(b))
+		fmt.Println("but expected", ref)
+		t.Fail()
+	}
+}
+
+func TestMarshalPolygon(t *testing.T) {
+	poly := new(Polygon)
+	poly.Coordinates = [][][]float64{
+		[][]float64{
+			[]float64{2.0, 1.0}, []float64{3.0, -2.0}, []float64{4.0, -1.0}, []float64{2.0, 1.0},
+		},
+	}
+	poly.CRS = WGS84
+	b, err := json.Marshal(poly)
+	if err != nil {
+		fmt.Println("error", err)
+		t.Error()
+	}
+	ref := `{"crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC::CRS84"}},"coordinates":[[[2,1],[3,-2],[4,-1],[2,1]]],"type":"Polygon"}`
 	if strings.Compare(string(b), ref) != 0 {
 		fmt.Println("recieved    ", string(b))
 		fmt.Println("but expected", ref)

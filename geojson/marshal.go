@@ -88,9 +88,9 @@ func (poly Polygon) MarshalJSON() ([]byte, error) {
 		ringSlice = append(ringSlice, Ring{i, slc})
 	}
 
-	go ringSender(ringSlice, chWinding)
-	go windingEnforcer(chWinding, chClosed)
-	go closedEnforcer(chClosed, chDone)
+	go ringSender(ringSlice, chClosed)
+	go closedEnforcer(chClosed, chWinding)
+	go windingEnforcer(chWinding, chDone)
 
 	coordinates := [][][]float64{}
 	for ring := range chDone {
@@ -143,9 +143,9 @@ func (mpoly MultiPolygon) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	go ringSender(ringSlice, chWinding)
-	go windingEnforcer(chWinding, chClosed)
-	go closedEnforcer(chClosed, chDone)
+	go ringSender(ringSlice, chClosed)
+	go closedEnforcer(chClosed, chWinding)
+	go windingEnforcer(chWinding, chDone)
 
 	coordinates := [][][][]float64{}
 	for ring := range chDone {
